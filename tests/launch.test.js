@@ -72,6 +72,34 @@ describe('launch', () => {
     await launchAccount('work', [], stubSpawner)
     assert.equal(spawned, true)
   })
+
+  it('LA-06: sets process.env.CLAUDE_CONFIG_DIR in current process', async () => {
+    createFakeProfile('home')
+    createFakeProfile('work')
+    process.env.CLAUDE_CONFIG_DIR = profileDir('home')
+
+    const stubSpawner = (cmd, args, opts) => {
+      return { on: (event, cb) => { if (event === 'close') cb(0) } }
+    }
+    await launchAccount('work', [], stubSpawner)
+    // Node.js process env is updated, but this does NOT affect the parent shell
+    assert.equal(process.env.CLAUDE_CONFIG_DIR, profileDir('work'))
+  })
+
+  it('LA-07: spawn receives the updated CLAUDE_CONFIG_DIR, not the old one', async () => {
+    createFakeProfile('home')
+    createFakeProfile('work')
+    process.env.CLAUDE_CONFIG_DIR = profileDir('home')
+
+    let spawnedEnv
+    const stubSpawner = (cmd, args, opts) => {
+      spawnedEnv = opts.env.CLAUDE_CONFIG_DIR
+      return { on: (event, cb) => { if (event === 'close') cb(0) } }
+    }
+    await launchAccount('work', [], stubSpawner)
+    assert.equal(spawnedEnv, profileDir('work'))
+    assert.notEqual(spawnedEnv, profileDir('home'))
+  })
 })
 
 fs.rmSync(TMP, { recursive: true, force: true })

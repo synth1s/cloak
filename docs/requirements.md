@@ -297,6 +297,7 @@ When the user runs any `cloak` command for the first time and shell integration 
 2. System validates and sets `CLAUDE_CONFIG_DIR` in the child process
 3. System spawns `claude` — Claude Code opens with the selected cloak
 4. After Claude Code exits, the parent shell's `CLAUDE_CONFIG_DIR` is **unchanged**
+5. `cloak whoami` still shows the **previous** account (expected behavior)
 
 **Flow with extra arguments:**
 1. User runs `claude -a work --resume`
@@ -305,8 +306,8 @@ When the user runs any `cloak` command for the first time and shell integration 
 **Business rules:**
 - All arguments after the account name are passed directly to `claude`
 - `claude -a <name>` and `claude account launch <name>` (shell integration) set `CLAUDE_CONFIG_DIR` in the **parent shell**, so `whoami` reflects the correct account after Claude exits
-- `cloak launch <name>` (direct mode) sets `CLAUDE_CONFIG_DIR` only in the **child process**, so the parent shell is not affected
-- This difference is documented and intentional — shell integration provides the richer experience
+- `cloak launch <name>` (direct mode) sets `CLAUDE_CONFIG_DIR` only in the **child process** — `cloak whoami` will NOT reflect the launched account after exit. This is an OS-level constraint: a child process cannot modify its parent's environment
+- To get full `whoami` consistency in direct mode, use `cloak switch <name>` before `claude`, or set up shell integration
 
 ---
 

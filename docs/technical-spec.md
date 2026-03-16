@@ -545,6 +545,8 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | LA-03 | Launch with invalid name | — | Validation error |
 | LA-04 | Launch passes extra arguments | `claude -a work --resume` | `spawn` called with `["--resume"]` |
 | LA-05 | Launch with already active account | `CLAUDE_CONFIG_DIR` already points to it | Works normally (launch always proceeds) |
+| LA-06 | Sets process.env in current Node process | Was `home`, launch `work` | `process.env.CLAUDE_CONFIG_DIR` is `work` after launch |
+| LA-07 | Spawn receives updated env, not old one | Was `home`, launch `work` | Spawn env is `work`, not `home` |
 
 **Testing approach:** `launch.js` should accept an optional `spawner` function (defaults to `child_process.spawn`). Tests inject a stub spawner to verify the correct arguments and environment without actually executing `claude`.
 
