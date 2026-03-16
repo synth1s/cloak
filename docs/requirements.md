@@ -285,29 +285,29 @@ When the user runs any `cloak` command for the first time and shell integration 
 
 **Actor:** User in their daily workflow.
 
-**Main flow (with shell integration):**
-1. User runs `claude -a <name>` (or `claude account launch <name>`)
+**Main flow (requires shell integration):**
+1. User runs `claude -a <name>` (optionally with extra arguments)
 2. Shell function calls `cloak switch --print-env <name>` and evals the output (sets `CLAUDE_CONFIG_DIR` in the **current shell**)
 3. Shell function calls `command claude` with any extra arguments
 4. Claude Code opens using the selected cloak's configuration
 5. After Claude Code exits, the shell still has the correct `CLAUDE_CONFIG_DIR`
 
-**Main flow (direct mode):**
-1. User runs `cloak launch <name>`
-2. System validates and sets `CLAUDE_CONFIG_DIR` in the child process
-3. System spawns `claude` — Claude Code opens with the selected cloak
-4. After Claude Code exits, the parent shell's `CLAUDE_CONFIG_DIR` is **unchanged**
-5. `cloak whoami` still shows the **previous** account (expected behavior)
-
 **Flow with extra arguments:**
 1. User runs `claude -a work --resume`
 2. Shell function evals the switch, then calls `command claude --resume`
 
+**Alternative flow — no shell integration:**
+1. User runs `cloak switch work`
+2. System prints the `export CLAUDE_CONFIG_DIR=...` command
+3. User copies and pastes the export command
+4. User runs `claude`
+5. Claude Code opens with the selected cloak
+
 **Business rules:**
 - All arguments after the account name are passed directly to `claude`
-- `claude -a <name>` and `claude account launch <name>` (shell integration) set `CLAUDE_CONFIG_DIR` in the **parent shell**, so `whoami` reflects the correct account after Claude exits
-- `cloak launch <name>` (direct mode) sets `CLAUDE_CONFIG_DIR` only in the **child process** — `cloak whoami` will NOT reflect the launched account after exit. This is an OS-level constraint: a child process cannot modify its parent's environment
-- To get full `whoami` consistency in direct mode, use `cloak switch <name>` before `claude`, or set up shell integration
+- `claude -a <name>` sets `CLAUDE_CONFIG_DIR` in the **parent shell**, so `whoami` reflects the correct account after Claude exits
+- This command requires shell integration — it is the primary incentive for users to set up `eval "$(cloak init)"`
+- Without shell integration, the equivalent workflow is `cloak switch <name>` (copy export) + `claude`
 
 ---
 
@@ -345,18 +345,7 @@ $ claude account create home
 ✔ Cloak "home" created.
 ```
 
-### 5.3 Daily use — direct mode
-
-```
-$ cloak launch work
-# Claude Code opens wearing the work cloak
-
-# In another terminal:
-$ cloak launch home
-# Claude Code opens wearing the home cloak
-```
-
-### 5.4 Daily use — shell integration mode
+### 5.3 Daily use — with shell integration
 
 ```
 $ claude -a work
@@ -365,6 +354,19 @@ $ claude -a work
 # In another terminal:
 $ claude -a home
 # Claude Code opens wearing the home cloak
+```
+
+### 5.4 Daily use — without shell integration
+
+```
+$ cloak switch work
+Run this command to switch:
+
+  export CLAUDE_CONFIG_DIR=/home/user/.cloak/profiles/work
+
+$ export CLAUDE_CONFIG_DIR=/home/user/.cloak/profiles/work
+$ claude
+# Claude Code opens wearing the work cloak
 ```
 
 ### 5.5 Check which cloak you're wearing
@@ -381,12 +383,12 @@ $ cloak list
 ### 5.6 Concurrent sessions
 
 ```
-# Terminal A — wearing the work cloak:
-$ cloak launch work
+# Terminal A:
+$ claude -a work
 # ... working ...
 
-# Terminal B — wearing the home cloak (at the same time):
-$ cloak launch home
+# Terminal B (at the same time):
+$ claude -a home
 # ... personal use, no conflicts ...
 ```
 

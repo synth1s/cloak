@@ -32,7 +32,6 @@
 │   │   ├── delete.js        # claude account delete / rm
 │   │   ├── whoami.js        # claude account whoami
 │   │   ├── rename.js        # claude account rename
-│   │   ├── launch.js        # cloak launch (switch + exec claude)
 │   │   └── init.js          # cloak init (shell integration)
 │   └── lib/
 │       ├── paths.js         # Path constants and directory helpers
@@ -47,7 +46,6 @@
 │   ├── switch.test.js
 │   ├── delete.test.js
 │   ├── rename.test.js
-│   ├── launch.test.js
 │   ├── init.test.js
 │   └── tip.test.js
 ├── docs/
@@ -72,12 +70,11 @@ Installed via npm. All commands work immediately after install.
 
 ```
 cloak create [name]                 → creates an account
-cloak launch <name> [args...]       → switches account + launches claude
+cloak switch <name> [--print-env]   → sets CLAUDE_CONFIG_DIR (prints export command)
 cloak list                          → lists accounts
 cloak whoami                        → shows active account
 cloak delete <name>                 → deletes an account
 cloak rename <old> <new>            → renames an account
-cloak switch <name> [--print-env]   → sets CLAUDE_CONFIG_DIR without launching
 cloak init                          → emits shell integration code (optional)
 ```
 
@@ -95,8 +92,6 @@ claude account delete <name>      → routes to: cloak delete
 claude account rm <name>          → alias for delete
 claude account whoami             → routes to: cloak whoami
 claude account rename <a> <b>     → routes to: cloak rename
-claude account launch <name>      → eval switch + command claude (same as -a)
-
 claude -a <name> [args...]        → eval switch + command claude
 claude [anything else]            → passes through to original claude
 ```
@@ -188,7 +183,7 @@ Responsibilities:
 - Shebang `#!/usr/bin/env node`
 - Call `showTipIfNeeded()` before command execution
 - Read version from `package.json`
-- Register all 8 commands in commander
+- Register all 7 commands in commander
 - Call `program.parse()`
 
 ```js
@@ -199,7 +194,6 @@ Responsibilities:
 // cloak delete <name>               → commands/delete.js
 // cloak whoami                      → commands/whoami.js
 // cloak rename <old> <new>          → commands/rename.js
-// cloak launch <name> [args...]     → commands/launch.js
 // cloak init                        → commands/init.js
 ```
 
@@ -248,16 +242,6 @@ claude() {
       if [ $exit_code -eq 0 ]; then
         eval "$output"
       fi
-    elif [ "$subcmd" = "launch" ]; then
-      local name="$1"
-      shift
-      local output
-      output=$(command cloak switch --print-env "$name")
-      local exit_code=$?
-      if [ $exit_code -eq 0 ]; then
-        eval "$output"
-        command claude "$@"
-      fi
     else
       command cloak "$subcmd" "$@"
     fi
@@ -277,7 +261,7 @@ claude() {
 }
 ```
 
-**Note:** both the `-a` branch and `account launch` eval the switch (setting `CLAUDE_CONFIG_DIR` in the parent shell), then call `command claude`. This ensures `whoami` reflects the correct account after Claude exits. The `cloak launch` command is still available for direct mode (no shell integration), but sets the env only in the child process.
+**Note:** the `-a` branch evals the switch (setting `CLAUDE_CONFIG_DIR` in the parent shell), then calls `command claude`. This ensures `whoami` reflects the correct account after Claude exits.
 
 #### `commands/create.js`
 
@@ -366,22 +350,6 @@ Effects:
   6. Display: ✔ Cloak "<old>" renamed to "<new>".
 ```
 
-#### `commands/launch.js`
-
-```
-Input: name (string), extraArgs (string[])
-Effects:
-  1. Validate name
-  2. Check account exists (if not → error, exit 1)
-  3. Set process.env.CLAUDE_CONFIG_DIR = profileDir(name)
-  4. Display: ✔ Now wearing cloak "<name>".
-  5. Spawn `claude` with extraArgs, inheriting the modified env and stdio
-     - Uses child_process.spawn with { stdio: 'inherit', env: process.env }
-     - On child exit, propagate exit code via process.exit(child.exitCode)
-```
-
-**Design rationale:** this command moves the switch + launch logic from the shell function into Node.js, making it fully testable. The shell function becomes a thin router that delegates `claude -a <name>` to `command cloak launch <name>`.
-
 ---
 
 ## 5. Testing strategy
@@ -424,9 +392,8 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
  6. switch.test.js    → switch.js          (export output)
  7. delete.test.js    → delete.js          (directory removal)
  8. rename.test.js    → rename.js          (directory renaming)
- 9. launch.test.js    → launch.js          (switch + exec claude)
-10. tip.test.js       → tip.js            (first-run shell integration tip)
-11. init.test.js      → init.js           (shell code output — updated to include CLOAK_SHELL_INTEGRATION)
+ 9. tip.test.js       → tip.js            (first-run shell integration tip)
+10. init.test.js      → init.js           (shell code output)
 ```
 
 ### 5.4 Test matrix (82 tests across 11 suites)
@@ -540,16 +507,6 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 
 | ID | Scenario | Precondition | Expected |
 |----|----------|-------------|----------|
-| LA-01 | Launch with existing account | Account exists | `spawn` called with `CLAUDE_CONFIG_DIR` set to correct path |
-| LA-02 | Launch with missing account | — | Error, exit 1 |
-| LA-03 | Launch with invalid name | — | Validation error |
-| LA-04 | Launch passes extra arguments | `claude -a work --resume` | `spawn` called with `["--resume"]` |
-| LA-05 | Launch with already active account | `CLAUDE_CONFIG_DIR` already points to it | Works normally (launch always proceeds) |
-| LA-06 | Sets process.env in current Node process | Was `home`, launch `work` | `process.env.CLAUDE_CONFIG_DIR` is `work` after launch |
-| LA-07 | Spawn receives updated env, not old one | Was `home`, launch `work` | Spawn env is `work`, not `home` |
-
-**Testing approach:** `launch.js` should accept an optional `spawner` function (defaults to `child_process.spawn`). Tests inject a stub spawner to verify the correct arguments and environment without actually executing `claude`.
-
 #### `tests/tip.test.js` — First-run shell integration tip
 
 | ID | Scenario | Precondition | Expected |
@@ -572,8 +529,7 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-05 | Detects current shell | `SHELL` env var set | Output is valid for the detected shell |
 | I-06 | Sets CLOAK_SHELL_INTEGRATION env var | — | Stdout contains `export CLOAK_SHELL_INTEGRATION=1` |
 | I-07 | `-a` sets env in parent shell | — | The `-a` branch contains `eval` before `command claude` |
-| I-08 | `account launch` evals AND calls `command claude` | — | The `launch` branch contains both `eval` and `command claude` in sequence |
-| I-09 | `account switch` does NOT call `command claude` | — | The `switch`/`use` branch does not contain `command claude` after eval |
+| I-08 | `account switch` does NOT call `command claude` | — | The `switch`/`use` branch does not contain `command claude` after eval |
 
 ---
 
