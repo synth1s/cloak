@@ -36,7 +36,8 @@
 │   └── lib/
 │       ├── paths.js         # Path constants and directory helpers
 │       ├── validate.js      # Account name validation
-│       └── tip.js           # First-run shell integration tip
+│       ├── tip.js           # First-run shell integration tip
+│       └── setup.js         # Automatic shell integration setup
 ├── tests/
 │   ├── validate.test.js
 │   ├── paths.test.js
@@ -47,7 +48,8 @@
 │   ├── delete.test.js
 │   ├── rename.test.js
 │   ├── init.test.js
-│   └── tip.test.js
+│   ├── tip.test.js
+│   └── setup.test.js
 ├── docs/
 │   ├── requirements.md      # Requirements and use cases
 │   └── technical-spec.md    # This document
@@ -293,10 +295,32 @@ Effects:
        echo "✔ Now wearing cloak \"<target>\"."
      - Exit 0
   5. If NOT options.printEnv (no shell integration):
-     - Print manual instructions with the export command
+     - Prompt user to choose:
+       1. Automatic setup (setupShellIntegration())
+       2. Manual instructions
+     - If automatic: append to rc file, print reload instructions, execute switch via --print-env
+     - If manual: print eval "$(cloak init)" instructions
 ```
 
 **`--print-env` flag:** used internally by the shell function. Not documented to the user.
+
+#### `src/lib/setup.js` — Automatic shell integration setup
+
+```js
+export function getRcFilePath()
+// Returns the rc file path based on SHELL env var:
+//   /bin/zsh or */zsh → ~/.zshrc
+//   everything else   → ~/.bashrc
+
+export function isAlreadyInstalled(rcFilePath)
+// Reads the rc file and checks if it contains 'cloak init'
+// Returns: boolean
+
+export function installToRcFile(rcFilePath)
+// Appends '\neval "$(cloak init)"\n' to the rc file
+// Returns: void
+// Does NOT install if isAlreadyInstalled() returns true
+```
 
 #### `commands/list.js`
 
@@ -393,7 +417,8 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
  7. delete.test.js    → delete.js          (directory removal)
  8. rename.test.js    → rename.js          (directory renaming)
  9. tip.test.js       → tip.js            (first-run shell integration tip)
-10. init.test.js      → init.js           (shell code output)
+10. setup.test.js     → setup.js          (automatic shell integration setup)
+11. init.test.js      → init.js           (shell code output)
 ```
 
 ### 5.4 Test matrix (82 tests across 11 suites)
@@ -476,8 +501,20 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | S-02 | Switch to missing account | — | Exit 1 |
 | S-02b | Friendly error for missing account | — | Stderr contains "not found" |
 | S-03 | Switch to already active account | `CLAUDE_CONFIG_DIR` already points to it | Warning, no export output |
-| S-04 | Switch without --print-env | Account exists | Manual instructions printed |
+| S-04 | Switch without --print-env, user chooses auto setup | Account exists, no integration | Calls setupShellIntegration |
 | S-05 | Output contains correct path | — | Path resolves to `~/.cloak/profiles/<name>` |
+| S-06 | Switch without --print-env, user chooses manual | Account exists, no integration | Prints manual instructions |
+
+#### `tests/setup.test.js` — Automatic shell integration setup
+
+| ID | Scenario | Precondition | Expected |
+|----|----------|-------------|----------|
+| SE-01 | getRcFilePath returns .bashrc for bash | `SHELL=/bin/bash` | `~/.bashrc` |
+| SE-02 | getRcFilePath returns .zshrc for zsh | `SHELL=/bin/zsh` | `~/.zshrc` |
+| SE-03 | isAlreadyInstalled returns false for clean file | rc file without cloak init | `false` |
+| SE-04 | isAlreadyInstalled returns true when line exists | rc file contains `cloak init` | `true` |
+| SE-05 | installToRcFile appends init line | Clean rc file | File now contains `eval "$(cloak init)"` |
+| SE-06 | installToRcFile does not duplicate | rc file already has init line | File unchanged |
 
 #### `tests/delete.test.js` — Delete command
 

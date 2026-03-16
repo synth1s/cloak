@@ -165,7 +165,7 @@ When the user runs any `cloak` command for the first time and shell integration 
 **Actor:** User with at least one saved account.
 
 **Main flow (with shell integration):**
-1. User runs `claude account switch <name>` (or `claude account use <name>`)
+1. User runs `claude account switch <name>` (or `claude account use <name>`, or `cloak switch <name>`)
 2. System validates the name
 3. System checks that the account exists
 4. Shell function runs `export CLAUDE_CONFIG_DIR=~/.cloak/profiles/<name>`
@@ -184,14 +184,29 @@ When the user runs any `cloak` command for the first time and shell integration 
 1. System reports the account was not found
 2. System suggests `claude account create`
 
-**Alternative flow — no shell integration:**
-1. System prints the `export CLAUDE_CONFIG_DIR=...` command for the user to copy and paste
+**Alternative flow — no shell integration (first time):**
+1. System detects shell integration is not active (`CLOAK_SHELL_INTEGRATION !== '1'`)
+2. System presents two options:
+   - **Option 1: Automatic setup** — adds `eval "$(cloak init)"` to the user's shell rc file and reloads
+   - **Option 2: Manual instructions** — prints the commands for the user to run manually
+3. If user chooses automatic setup:
+   a. System detects the shell (bash → `~/.bashrc`, zsh → `~/.zshrc`)
+   b. System checks if the line already exists in the rc file (no duplicates)
+   c. System appends `eval "$(cloak init)"` to the rc file
+   d. System sources the rc file in the current process (prints instructions to reload)
+   e. System executes the switch
+4. If user chooses manual instructions:
+   a. System prints the `eval "$(cloak init)"` setup command
+   b. Switch is not executed (user must reload shell first)
 
 **Business rules:**
-- Switching does **not** modify any files. It only changes the environment variable
+- Switching does **not** modify any account files. It only changes the environment variable
 - Claude Code sessions already running are not affected by the switch
 - Each terminal maintains its own `CLAUDE_CONFIG_DIR` independently
 - `claude -a <name>` combines switch + launch in a single command
+- The shell integration setup prompt only appears when `CLOAK_SHELL_INTEGRATION` is not set
+- Automatic setup does not duplicate the init line if it already exists in the rc file
+- Automatic setup detects the correct rc file based on `SHELL` env var
 
 ---
 
