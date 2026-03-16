@@ -59,14 +59,8 @@ export async function switchAccount(name, options = {}) {
     } else {
       console.log(chalk.dim(`  Already installed in ${rcFile}`))
     }
-    console.log(chalk.dim(`\n  Reload your shell to activate:`))
-    console.log(chalk.dim(`    source ${rcFile}\n`))
-    console.log(chalk.dim(`  Then run:`))
-    console.log(chalk.dim(`    claude account switch ${name}\n`))
+    console.log(chalk.dim(`\n  Run: `) + chalk.white(`source ${rcFile} && cloak switch ${name}\n`))
   } else {
-    console.log(chalk.dim('\n  Add this to your shell config:'))
-    console.log(`    eval "$(cloak init)"`)
-    console.log(chalk.dim('\n  Then reload and run:'))
-    console.log(chalk.dim(`    claude account switch ${name}\n`))
+    console.log(chalk.dim(`\n  Run: `) + chalk.white(`echo 'eval "$(cloak init)"' >> ${getRcFilePath()} && source ${getRcFilePath()} && cloak switch ${name}\n`))
   }
 }
