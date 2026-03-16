@@ -95,8 +95,9 @@ claude account delete <name>      → routes to: cloak delete
 claude account rm <name>          → alias for delete
 claude account whoami             → routes to: cloak whoami
 claude account rename <a> <b>     → routes to: cloak rename
+claude account launch <name>      → eval switch + command claude (same as -a)
 
-claude -a <name> [args...]        → routes to: cloak launch (switch + exec claude)
+claude -a <name> [args...]        → eval switch + command claude
 claude [anything else]            → passes through to original claude
 ```
 
@@ -240,7 +241,7 @@ claude() {
   if [ "$1" = "account" ]; then
     local subcmd="$2"
     shift 2
-    if [ "$subcmd" = "switch" ] || [ "$subcmd" = "use" ]; then
+    if [ "$subcmd" = "switch" ] || [ "$subcmd" = "use" ] || [ "$subcmd" = "launch" ]; then
       local output
       output=$(command cloak switch --print-env "$@")
       local exit_code=$?
@@ -266,7 +267,7 @@ claude() {
 }
 ```
 
-**Note:** the `-a` branch first evals the switch (setting `CLAUDE_CONFIG_DIR` in the parent shell), then calls `command claude`. This ensures `whoami` reflects the correct account after Claude exits. The `cloak launch` command is still available for direct mode (no shell integration).
+**Note:** both the `-a` branch and `account launch` eval the switch (setting `CLAUDE_CONFIG_DIR` in the parent shell), then call `command claude`. This ensures `whoami` reflects the correct account after Claude exits. The `cloak launch` command is still available for direct mode (no shell integration), but sets the env only in the child process.
 
 #### `commands/create.js`
 
@@ -559,6 +560,7 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-05 | Detects current shell | `SHELL` env var set | Output is valid for the detected shell |
 | I-06 | Sets CLOAK_SHELL_INTEGRATION env var | — | Stdout contains `export CLOAK_SHELL_INTEGRATION=1` |
 | I-07 | `-a` sets env in parent shell | — | The `-a` branch contains `eval` before `command claude` |
+| I-08 | `account launch` sets env in parent shell | — | The `account` branch treats `launch` same as `switch`/`use` (eval + command claude) |
 
 ---
 

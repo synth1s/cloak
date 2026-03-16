@@ -286,7 +286,7 @@ When the user runs any `cloak` command for the first time and shell integration 
 **Actor:** User in their daily workflow.
 
 **Main flow (with shell integration):**
-1. User runs `claude -a <name>`
+1. User runs `claude -a <name>` (or `claude account launch <name>`)
 2. Shell function calls `cloak switch --print-env <name>` and evals the output (sets `CLAUDE_CONFIG_DIR` in the **current shell**)
 3. Shell function calls `command claude` with any extra arguments
 4. Claude Code opens using the selected cloak's configuration
@@ -304,7 +304,7 @@ When the user runs any `cloak` command for the first time and shell integration 
 
 **Business rules:**
 - All arguments after the account name are passed directly to `claude`
-- `claude -a <name>` (shell integration) sets `CLAUDE_CONFIG_DIR` in the **parent shell**, so `whoami` reflects the correct account after Claude exits
+- `claude -a <name>` and `claude account launch <name>` (shell integration) set `CLAUDE_CONFIG_DIR` in the **parent shell**, so `whoami` reflects the correct account after Claude exits
 - `cloak launch <name>` (direct mode) sets `CLAUDE_CONFIG_DIR` only in the **child process**, so the parent shell is not affected
 - This difference is documented and intentional — shell integration provides the richer experience
 
