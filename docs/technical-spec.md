@@ -66,24 +66,24 @@
 
 Cloak exposes two entry points:
 
-### 3.1 The `cloak` binary (direct)
+### 3.1 The `cloak` binary (primary mode — no setup required)
 
-Installed via npm. Used for management and to generate the shell integration.
+Installed via npm. All commands work immediately after install.
 
 ```
-cloak init                          → emits shell code
 cloak create [name]                 → creates an account
-cloak switch <name> [--print-env]   → switches account
+cloak launch <name> [args...]       → switches account + launches claude
 cloak list                          → lists accounts
-cloak delete <name>                 → deletes an account
 cloak whoami                        → shows active account
+cloak delete <name>                 → deletes an account
 cloak rename <old> <new>            → renames an account
-cloak launch <name> [args...]       → switches account + execs claude (used by shell integration)
+cloak switch <name> [--print-env]   → sets CLAUDE_CONFIG_DIR without launching
+cloak init                          → emits shell integration code (optional)
 ```
 
-### 3.2 The `claude` shell function (via shell integration)
+### 3.2 The `claude` shell function (optional — via shell integration)
 
-After `eval "$(cloak init)"`, the `claude` command is extended:
+After `eval "$(cloak init)"`, the `claude` command is extended with syntax sugar:
 
 ```
 claude account create [name]      → routes to: cloak create
@@ -410,7 +410,7 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 11. init.test.js      → init.js           (shell code output — updated to include CLOAK_SHELL_INTEGRATION)
 ```
 
-### 5.4 Test matrix
+### 5.4 Test matrix (82 tests across 11 suites)
 
 #### `tests/validate.test.js` — Name validation
 
@@ -558,7 +558,7 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 ```json
 {
   "name": "@synth1s/cloak",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cloak your Claude. Switch identities in seconds.",
   "type": "module",
   "bin": {
