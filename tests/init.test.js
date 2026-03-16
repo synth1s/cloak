@@ -3,6 +3,19 @@ import assert from 'node:assert/strict'
 
 const { getInitScript } = await import('../src/commands/init.js')
 
+// Helper: extract lines between a start condition and the next elif/else at same indent
+function extractBranch(lines, startIdx) {
+  const branchLines = []
+  const startIndent = lines[startIdx].search(/\S/)
+  for (let i = startIdx + 1; i < lines.length; i++) {
+    const trimmed = lines[i].trim()
+    const indent = lines[i].search(/\S/)
+    if (indent <= startIndent && (trimmed.startsWith('elif') || trimmed.startsWith('else') || trimmed === 'fi')) break
+    branchLines.push(lines[i])
+  }
+  return branchLines
+}
+
 describe('init', () => {
   beforeEach(() => {
     process.env.SHELL = '/bin/bash'
@@ -21,7 +34,6 @@ describe('init', () => {
 
   it('I-03: -a evals switch then calls claude', () => {
     const output = getInitScript()
-    // The -a branch must call cloak switch --print-env AND command claude
     assert.ok(output.includes('cloak switch --print-env'))
     assert.ok(output.includes('command claude'))
   })
@@ -44,7 +56,6 @@ describe('init', () => {
 
   it('I-07: -a sets env in parent shell via eval before command claude', () => {
     const output = getInitScript()
-    // Find the -a branch and verify eval comes before command claude
     const aIndex = output.indexOf('"-a"')
     const evalIndex = output.indexOf('eval', aIndex)
     const claudeIndex = output.indexOf('command claude', evalIndex)
@@ -53,12 +64,33 @@ describe('init', () => {
     assert.ok(claudeIndex > evalIndex, 'command claude appears after eval')
   })
 
-  it('I-08: account launch is treated same as switch/use (eval in parent shell)', () => {
+  it('I-08: account launch branch contains BOTH eval AND command claude', () => {
     const output = getInitScript()
-    // The condition that checks subcmd must include "launch"
-    assert.ok(output.includes('"launch"'), 'launch is checked in account branch')
-    // Verify it's in the same condition as switch/use, not in the generic else
-    const switchLine = output.split('\n').find(l => l.includes('"switch"') && l.includes('"use"'))
-    assert.ok(switchLine.includes('"launch"'), 'launch is in the same condition as switch and use')
+    const lines = output.split('\n')
+
+    // Find the dedicated launch branch (must be its own elif, not merged with switch)
+    const launchBranchIdx = lines.findIndex(l =>
+      l.includes('"launch"') && !l.includes('"switch"')
+    )
+    assert.ok(launchBranchIdx > -1, 'launch has its own branch separate from switch/use')
+
+    // Extract lines within the launch branch
+    const branchLines = extractBranch(lines, launchBranchIdx)
+    const hasEval = branchLines.some(l => l.includes('eval'))
+    const hasCommandClaude = branchLines.some(l => l.includes('command claude'))
+    assert.ok(hasEval, 'launch branch contains eval')
+    assert.ok(hasCommandClaude, 'launch branch contains command claude')
+  })
+
+  it('I-09: account switch does NOT call command claude after eval', () => {
+    const output = getInitScript()
+    const lines = output.split('\n')
+
+    const switchLineIdx = lines.findIndex(l => l.includes('"switch"') && l.includes('"use"'))
+    assert.ok(switchLineIdx > -1, 'switch/use branch exists')
+
+    const branchLines = extractBranch(lines, switchLineIdx)
+    const hasCommandClaude = branchLines.some(l => l.includes('command claude'))
+    assert.ok(!hasCommandClaude, 'switch/use branch does not call command claude')
   })
 })
