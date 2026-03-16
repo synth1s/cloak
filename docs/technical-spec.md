@@ -241,12 +241,22 @@ claude() {
   if [ "$1" = "account" ]; then
     local subcmd="$2"
     shift 2
-    if [ "$subcmd" = "switch" ] || [ "$subcmd" = "use" ] || [ "$subcmd" = "launch" ]; then
+    if [ "$subcmd" = "switch" ] || [ "$subcmd" = "use" ]; then
       local output
       output=$(command cloak switch --print-env "$@")
       local exit_code=$?
       if [ $exit_code -eq 0 ]; then
         eval "$output"
+      fi
+    elif [ "$subcmd" = "launch" ]; then
+      local name="$1"
+      shift
+      local output
+      output=$(command cloak switch --print-env "$name")
+      local exit_code=$?
+      if [ $exit_code -eq 0 ]; then
+        eval "$output"
+        command claude "$@"
       fi
     else
       command cloak "$subcmd" "$@"
@@ -560,7 +570,8 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-05 | Detects current shell | `SHELL` env var set | Output is valid for the detected shell |
 | I-06 | Sets CLOAK_SHELL_INTEGRATION env var | — | Stdout contains `export CLOAK_SHELL_INTEGRATION=1` |
 | I-07 | `-a` sets env in parent shell | — | The `-a` branch contains `eval` before `command claude` |
-| I-08 | `account launch` sets env in parent shell | — | The `account` branch treats `launch` same as `switch`/`use` (eval + command claude) |
+| I-08 | `account launch` evals AND calls `command claude` | — | The `launch` branch contains both `eval` and `command claude` in sequence |
+| I-09 | `account switch` does NOT call `command claude` | — | The `switch`/`use` branch does not contain `command claude` after eval |
 
 ---
 
