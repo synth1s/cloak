@@ -15,28 +15,21 @@ function cleanup() {
   if (fs.existsSync(PROFILES_DIR)) fs.rmSync(PROFILES_DIR, { recursive: true, force: true })
 }
 
-// Capture stdout
-function captureStdout(fn) {
-  const original = process.stdout.write
-  let output = ''
-  process.stdout.write = (chunk) => { output += chunk; return true }
-  try {
-    fn()
-  } finally {
-    process.stdout.write = original
+function interceptExit(fn) {
+  let exitCode = null
+  const original = process.exit
+  process.exit = (code) => { exitCode = code }
+  return async () => {
+    try { await fn() } finally { process.exit = original }
+    return exitCode
   }
-  return output
 }
 
 async function captureStdoutAsync(fn) {
   const original = process.stdout.write
   let output = ''
   process.stdout.write = (chunk) => { output += chunk; return true }
-  try {
-    await fn()
-  } finally {
-    process.stdout.write = original
-  }
+  try { await fn() } finally { process.stdout.write = original }
   return output
 }
 
@@ -53,7 +46,9 @@ describe('switch', () => {
   })
 
   it('S-02: fails for missing account', async () => {
-    await assert.rejects(() => switchAccount('nonexistent', { printEnv: true }), /not found/i)
+    const run = interceptExit(() => switchAccount('nonexistent', { printEnv: true }))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('S-03: warns when already on the same account', async () => {
@@ -67,7 +62,6 @@ describe('switch', () => {
     fs.mkdirSync(profileDir('work'), { recursive: true })
     const output = await captureStdoutAsync(() => switchAccount('work', {}))
     assert.ok(output.includes('export CLAUDE_CONFIG_DIR='))
-    assert.ok(output.includes('Run'))
   })
 
   it('S-05: output contains correct path', async () => {

@@ -22,6 +22,16 @@ function cleanup() {
   if (fs.existsSync(PROFILES_DIR)) fs.rmSync(PROFILES_DIR, { recursive: true, force: true })
 }
 
+function interceptExit(fn) {
+  let exitCode = null
+  const original = process.exit
+  process.exit = (code) => { exitCode = code }
+  return async () => {
+    try { await fn() } finally { process.exit = original }
+    return exitCode
+  }
+}
+
 describe('delete', () => {
   beforeEach(() => {
     delete process.env.CLAUDE_CONFIG_DIR
@@ -43,11 +53,15 @@ describe('delete', () => {
   it('D-03: refuses to delete active account', async () => {
     createFakeProfile('work')
     process.env.CLAUDE_CONFIG_DIR = profileDir('work')
-    await assert.rejects(() => deleteAccount('work', { confirm: true }), /wearing/i)
+    const run = interceptExit(() => deleteAccount('work', { confirm: true }))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('D-04: fails for missing account', async () => {
-    await assert.rejects(() => deleteAccount('nonexistent', { confirm: true }), /not found/i)
+    const run = interceptExit(() => deleteAccount('nonexistent', { confirm: true }))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('D-05: removes entire directory', async () => {

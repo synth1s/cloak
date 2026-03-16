@@ -5,11 +5,16 @@ import { validateAccountName } from '../lib/validate.js'
 export async function switchAccount(name, options = {}) {
   const validation = validateAccountName(name)
   if (!validation.valid) {
-    throw new Error(validation.error)
+    console.error(chalk.red(`✖ ${validation.error}`))
+    process.exit(1)
+    return
   }
 
   if (!profileExists(name)) {
-    throw new Error(`Account "${name}" not found. Run: claude account create ${name}`)
+    console.error(chalk.red(`✖ Account "${name}" not found.`))
+    console.log(chalk.dim(`  Run: claude account create ${name}`))
+    process.exit(1)
+    return
   }
 
   const active = getActiveProfile()
@@ -21,7 +26,6 @@ export async function switchAccount(name, options = {}) {
   const dir = profileDir(name)
 
   if (options.printEnv) {
-    // Output for eval by the shell function
     process.stdout.write(`export CLAUDE_CONFIG_DIR=${dir}\n`)
     process.stdout.write(`echo "${chalk.green(`✔ Now wearing cloak "${name}".`)}"\n`)
     return

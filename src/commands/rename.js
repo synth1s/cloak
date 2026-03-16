@@ -6,20 +6,28 @@ import { validateAccountName } from '../lib/validate.js'
 export async function renameAccount(oldName, newName) {
   const oldValidation = validateAccountName(oldName)
   if (!oldValidation.valid) {
-    throw new Error(oldValidation.error)
+    console.error(chalk.red(`✖ ${oldValidation.error}`))
+    process.exit(1)
+    return
   }
 
   const newValidation = validateAccountName(newName)
   if (!newValidation.valid) {
-    throw new Error(newValidation.error)
+    console.error(chalk.red(`✖ ${newValidation.error}`))
+    process.exit(1)
+    return
   }
 
   if (!profileExists(oldName)) {
-    throw new Error(`Account "${oldName}" not found.`)
+    console.error(chalk.red(`✖ Account "${oldName}" not found.`))
+    process.exit(1)
+    return
   }
 
   if (profileExists(newName)) {
-    throw new Error(`Account "${newName}" is already in use.`)
+    console.error(chalk.red(`✖ Account "${newName}" is already in use.`))
+    process.exit(1)
+    return
   }
 
   renameSync(profileDir(oldName), profileDir(newName))

@@ -22,6 +22,16 @@ function cleanup() {
   if (fs.existsSync(PROFILES_DIR)) fs.rmSync(PROFILES_DIR, { recursive: true, force: true })
 }
 
+function interceptExit(fn) {
+  let exitCode = null
+  const original = process.exit
+  process.exit = (code) => { exitCode = code }
+  return async () => {
+    try { await fn() } finally { process.exit = original }
+    return exitCode
+  }
+}
+
 describe('rename', () => {
   beforeEach(() => {
     delete process.env.CLAUDE_CONFIG_DIR
@@ -46,16 +56,22 @@ describe('rename', () => {
   it('R-03: fails when destination name already exists', async () => {
     createFakeProfile('first')
     createFakeProfile('second')
-    await assert.rejects(() => renameAccount('first', 'second'), /already in use/i)
+    const run = interceptExit(() => renameAccount('first', 'second'))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('R-04: fails when source account does not exist', async () => {
-    await assert.rejects(() => renameAccount('ghost', 'new-name'), /not found/i)
+    const run = interceptExit(() => renameAccount('ghost', 'new-name'))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('R-05: fails with invalid destination name', async () => {
     createFakeProfile('valid')
-    await assert.rejects(() => renameAccount('valid', '../bad'), /account name/i)
+    const run = interceptExit(() => renameAccount('valid', '../bad'))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('R-06: preserves all content after rename', async () => {

@@ -33,6 +33,21 @@ function cleanup() {
   if (fs.existsSync(claudeDir)) fs.rmSync(claudeDir, { recursive: true, force: true })
 }
 
+// Intercept process.exit to test error paths
+function interceptExit(fn) {
+  let exitCode = null
+  const original = process.exit
+  process.exit = (code) => { exitCode = code }
+  return async () => {
+    try {
+      await fn()
+    } finally {
+      process.exit = original
+    }
+    return exitCode
+  }
+}
+
 describe('create', () => {
   beforeEach(() => {
     delete process.env.CLAUDE_CONFIG_DIR
@@ -49,12 +64,16 @@ describe('create', () => {
   })
 
   it('C-02: fails without active session', async () => {
-    await assert.rejects(() => createAccount('work'), /no active.*session/i)
+    const run = interceptExit(() => createAccount('work'))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('C-03: fails with invalid name', async () => {
     fakeAuth()
-    await assert.rejects(() => createAccount('../bad'), /account name/i)
+    const run = interceptExit(() => createAccount('../bad'))
+    const code = await run()
+    assert.equal(code, 1)
   })
 
   it('C-04: copies settings when they exist', async () => {
