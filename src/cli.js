@@ -12,7 +12,6 @@ import { listAccounts } from './commands/list.js'
 import { deleteAccount } from './commands/delete.js'
 import { whoami } from './commands/whoami.js'
 import { renameAccount } from './commands/rename.js'
-import { launchAccount } from './commands/launch.js'
 import { initShell } from './commands/init.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -58,12 +57,6 @@ program
   .command('rename <old> <new>')
   .description('Rename a cloak')
   .action(renameAccount)
-
-program
-  .command('launch <name>')
-  .description('Wear a cloak and launch Claude')
-  .argument('[args...]', 'Arguments to pass to claude')
-  .action((name, args) => launchAccount(name, args))
 
 program
   .command('init')

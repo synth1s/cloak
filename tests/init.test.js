@@ -64,25 +64,7 @@ describe('init', () => {
     assert.ok(claudeIndex > evalIndex, 'command claude appears after eval')
   })
 
-  it('I-08: account launch branch contains BOTH eval AND command claude', () => {
-    const output = getInitScript()
-    const lines = output.split('\n')
-
-    // Find the dedicated launch branch (must be its own elif, not merged with switch)
-    const launchBranchIdx = lines.findIndex(l =>
-      l.includes('"launch"') && !l.includes('"switch"')
-    )
-    assert.ok(launchBranchIdx > -1, 'launch has its own branch separate from switch/use')
-
-    // Extract lines within the launch branch
-    const branchLines = extractBranch(lines, launchBranchIdx)
-    const hasEval = branchLines.some(l => l.includes('eval'))
-    const hasCommandClaude = branchLines.some(l => l.includes('command claude'))
-    assert.ok(hasEval, 'launch branch contains eval')
-    assert.ok(hasCommandClaude, 'launch branch contains command claude')
-  })
-
-  it('I-09: account switch does NOT call command claude after eval', () => {
+  it('I-08: account switch does NOT call command claude after eval', () => {
     const output = getInitScript()
     const lines = output.split('\n')
 
