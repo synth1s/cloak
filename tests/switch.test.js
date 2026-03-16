@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test'
+import { describe, it, beforeEach, after } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'fs'
 import path from 'path'
@@ -13,6 +13,8 @@ const { switchAccount } = await import('../src/commands/switch.js')
 
 function cleanup() {
   if (fs.existsSync(PROFILES_DIR)) fs.rmSync(PROFILES_DIR, { recursive: true, force: true })
+  const bashrc = path.join(TMP, '.bashrc')
+  if (fs.existsSync(bashrc)) fs.unlinkSync(bashrc)
 }
 
 function interceptExit(fn) {
@@ -46,7 +48,12 @@ async function captureStdoutAsync(fn) {
 describe('switch', () => {
   beforeEach(() => {
     delete process.env.CLAUDE_CONFIG_DIR
+    process.env.SHELL = '/bin/bash'
     cleanup()
+  })
+
+  after(() => {
+    fs.rmSync(TMP, { recursive: true, force: true })
   })
 
   it('S-01: outputs export command with --print-env', async () => {
@@ -77,10 +84,12 @@ describe('switch', () => {
     assert.ok(!output.includes('export CLAUDE_CONFIG_DIR='))
   })
 
-  it('S-04: prints manual instructions without --print-env', async () => {
+  it('S-04: auto setup installs to rc file when user chooses auto', async () => {
     fs.mkdirSync(profileDir('work'), { recursive: true })
-    const output = await captureStdoutAsync(() => switchAccount('work', {}))
-    assert.ok(output.includes('export CLAUDE_CONFIG_DIR='))
+    fs.writeFileSync(path.join(TMP, '.bashrc'), '# existing\n')
+    await switchAccount('work', { setupChoice: 'auto' })
+    const rcContent = fs.readFileSync(path.join(TMP, '.bashrc'), 'utf8')
+    assert.ok(rcContent.includes('eval "$(cloak init)"'))
   })
 
   it('S-05: output contains correct path', async () => {
@@ -88,6 +97,12 @@ describe('switch', () => {
     const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
     assert.ok(output.includes(profileDir('work')))
   })
-})
 
-fs.rmSync(TMP, { recursive: true, force: true })
+  it('S-06: manual choice does not modify rc file', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    fs.writeFileSync(path.join(TMP, '.bashrc'), '# existing\n')
+    await switchAccount('work', { setupChoice: 'manual' })
+    const rcContent = fs.readFileSync(path.join(TMP, '.bashrc'), 'utf8')
+    assert.ok(!rcContent.includes('cloak init'))
+  })
+})
