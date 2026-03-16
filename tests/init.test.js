@@ -35,4 +35,9 @@ describe('init', () => {
     // Should still produce valid shell code
     assert.ok(output.includes('claude()'))
   })
+
+  it('I-06: sets CLOAK_SHELL_INTEGRATION env var', () => {
+    const output = getInitScript()
+    assert.ok(output.includes('export CLOAK_SHELL_INTEGRATION=1'))
+  })
 })

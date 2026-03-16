@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
+import { showTipIfNeeded } from './lib/tip.js'
 import { createAccount } from './commands/create.js'
 import { switchAccount } from './commands/switch.js'
 import { listAccounts } from './commands/list.js'
@@ -16,6 +17,8 @@ import { initShell } from './commands/init.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'))
+
+showTipIfNeeded()
 
 program
   .name('cloak')

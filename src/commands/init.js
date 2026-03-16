@@ -1,6 +1,8 @@
 export function getInitScript() {
   /* eslint-disable no-template-curly-in-string */
   const lines = [
+    'export CLOAK_SHELL_INTEGRATION=1',
+    '',
     'claude() {',
     '  if [ "$1" = "account" ]; then',
     '    local subcmd="$2"',
