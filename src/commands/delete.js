@@ -20,7 +20,7 @@ export async function deleteAccount(name, options = {}) {
 
   if (getActiveProfile() === name) {
     console.error(msg.cannotDiscardActive())
-    console.log(msg.suggestSwitchFirst())
+    console.error(msg.suggestSwitchFirst())
     process.exit(1)
     return
   }

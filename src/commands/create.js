@@ -36,7 +36,7 @@ export async function createAccount(name, options = {}) {
   const authSource = claudeAuthPath()
   if (!existsSync(authSource)) {
     console.error(msg.noActiveSession())
-    console.log(msg.loginFirst())
+    console.error(msg.loginFirst())
     process.exit(1)
     return
   }

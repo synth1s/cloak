@@ -52,7 +52,7 @@ export async function renameAccount(oldName, newName, options = {}) {
   renameSync(profileDir(oldName), profileDir(newName))
 
   if (getActiveProfile() === oldName) {
-    console.log(msg.updateSessionAfterRename(newName))
+    console.error(msg.updateSessionAfterRename(newName))
   }
 
   console.log(msg.cloakRenamed(oldName, newName))
