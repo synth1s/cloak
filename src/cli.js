@@ -24,6 +24,20 @@ program
   .name('cloak')
   .description('Cloak your Claude. Switch identities in seconds.')
   .version(pkg.version)
+  .addHelpText('after', `
+Quick start:
+  cloak create work              Save your current Claude session
+  cloak create home              Save another session
+  cloak switch work              Switch to a cloak
+  cloak list                     See all your cloaks
+
+Shell integration (recommended):
+  eval "$(cloak init)"           Add to .bashrc/.zshrc for:
+  claude -a work                 Switch and launch Claude in one step
+  claude account switch work     Same as cloak switch
+  claude account list            Same as cloak list
+
+Learn more: https://github.com/synth1s/cloak`)
 
 program
   .command('create [name]')
@@ -37,10 +51,10 @@ program
   .command('switch <name>')
   .alias('use')
   .description('Wear a different cloak')
-  .addOption(new Option('--print-env').hideHelp())
-  .action((name, opts) => {
-    if (!opts.printEnv) renderContextBar('switch')
-    return switchAccount(name, { printEnv: opts.printEnv })
+  .action((name) => {
+    const printEnv = process.argv.includes('--print-env')
+    if (!printEnv) renderContextBar('switch')
+    return switchAccount(name, { printEnv })
   })
 
 program
@@ -85,7 +99,7 @@ program
 
 program
   .command('init')
-  .description('Output shell integration code (use with eval)')
+  .description('Output shell integration code')
   .action(initShell)
 
 program.parse()
