@@ -30,6 +30,8 @@ export async function switchAccount(name, options = {}) {
 
   if (options.printEnv) {
     process.stdout.write(msg.printEnvExport(dir))
+    // Confirmation to stderr so it doesn't interfere with eval
+    process.stderr.write(msg.cloakSwitched(name) + '\n')
     return
   }
 
