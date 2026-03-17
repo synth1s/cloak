@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/synth1s/cloak/actions/workflows/ci.yml/badge.svg)](https://github.com/synth1s/cloak/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@synth1s/cloak)](https://www.npmjs.com/package/@synth1s/cloak)
+[![downloads](https://img.shields.io/npm/dw/@synth1s/cloak)](https://www.npmjs.com/package/@synth1s/cloak)
 [![license](https://img.shields.io/npm/l/@synth1s/cloak)](LICENSE)
 
 **Stop logging out. Start switching.**
