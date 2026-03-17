@@ -6,7 +6,7 @@ If you discover a security vulnerability in @synth1s/cloak, please report it res
 
 **Do NOT open a public issue.** Instead, email:
 
-**goulartfs@gmail.com**
+**cloak@synth1s.com.br**
 
 Include:
 - Description of the vulnerability
