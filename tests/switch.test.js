@@ -106,4 +106,38 @@ describe('switch', () => {
     const rcContent = fs.readFileSync(path.join(TMP, '.bashrc'), 'utf8')
     assert.ok(!rcContent.includes('cloak init'))
   })
+
+  it('S-07: --print-env stdout contains only eval-safe shell code', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
+    // Every line must be valid shell: export or empty
+    const lines = output.trim().split('\n')
+    for (const line of lines) {
+      assert.ok(
+        line.startsWith('export ') || line.trim() === '',
+        `stdout line must be eval-safe shell code, got: "${line}"`
+      )
+    }
+  })
+
+  it('S-08: --print-env confirmation goes to stderr not stdout', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    let stderrOutput = ''
+    const originalWrite = process.stderr.write
+    process.stderr.write = (chunk) => { stderrOutput += chunk; return true }
+    try {
+      await switchAccount('work', { printEnv: true })
+    } finally {
+      process.stderr.write = originalWrite
+    }
+    assert.ok(stderrOutput.includes('Now wearing cloak'), 'confirmation goes to stderr')
+  })
+
+  it('S-09: error messages go to stderr not stdout when --print-env', async () => {
+    const stdout = await captureStdoutAsync(() => {
+      const run = interceptExit(() => switchAccount('nonexistent', { printEnv: true }))
+      return run()
+    })
+    assert.equal(stdout, '', 'error must not leak to stdout with --print-env')
+  })
 })

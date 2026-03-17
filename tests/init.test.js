@@ -118,4 +118,33 @@ describe('init', () => {
     assert.ok(bannerLine, 'cloak banner line exists')
     assert.ok(bannerLine.includes('>&2'), 'banner output redirected to stderr')
   })
+
+  it('I-11: -a branch calls cloak banner before command claude', () => {
+    const output = getInitScript()
+    const func = extractFunction(output, 'claude')
+    const lines = func.split('\n')
+
+    // Find the -a branch
+    const aIdx = lines.findIndex(l => l.includes('"-a"'))
+    assert.ok(aIdx > -1, '-a branch exists')
+
+    const afterA = lines.slice(aIdx)
+    const bannerIdx = afterA.findIndex(l => l.includes('cloak banner'))
+    const claudeIdx = afterA.findIndex(l => l.includes('command claude'))
+    assert.ok(bannerIdx > -1, '-a branch contains cloak banner')
+    assert.ok(claudeIdx > bannerIdx, 'command claude comes after cloak banner in -a branch')
+  })
+
+  it('I-12: -a banner goes to stderr', () => {
+    const output = getInitScript()
+    const func = extractFunction(output, 'claude')
+    const lines = func.split('\n')
+
+    // Find banner lines in the -a branch area
+    const aIdx = lines.findIndex(l => l.includes('"-a"'))
+    const afterA = lines.slice(aIdx)
+    const bannerLine = afterA.find(l => l.includes('cloak banner'))
+    assert.ok(bannerLine, 'banner in -a branch exists')
+    assert.ok(bannerLine.includes('>&2'), 'banner in -a branch goes to stderr')
+  })
 })
