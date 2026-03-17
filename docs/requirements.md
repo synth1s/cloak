@@ -340,28 +340,38 @@ When any other `cloak` command runs without shell integration, a non-blocking ti
 
 ---
 
-### UC-09: Show active cloak on claude launch
+### UC-09: Context bar (universal status indicator)
 
-**Actor:** User launching Claude Code with shell integration active.
+**Actor:** Any user running a cloak command.
 
-**Main flow:**
-1. User runs `claude` (or `claude` with any arguments)
-2. Shell function checks if `CLAUDE_CONFIG_DIR` is set and points to a valid cloak
-3. If yes, displays: `🔹 Wearing cloak "<name>"`
-4. Proceeds to launch Claude Code normally
+**Description:** every `cloak` command displays a context bar at the top of its output showing: the command executed, the active profile, and the associated email. This follows Nielsen's Heuristic #1 (Visibility of System Status) and the Starship prompt pattern of context-aware indicators.
 
-**Alternative flow — no cloak active:**
-1. `CLAUDE_CONFIG_DIR` is not set or doesn't point to a cloak
-2. No message is shown
-3. Claude Code launches normally
+**Format:**
+```
+cloak › <command> · <profile> ‹email› ──────────────────
+```
+
+**Examples:**
+```
+cloak › list · work ‹filipe@company.com› ───────────────
+cloak › switch · home ‹filipe@personal.com› ────────────
+cloak › whoami · work ‹filipe@company.com› ─────────────
+cloak › claude · work ‹filipe@company.com› ─────────────
+```
+
+**When no cloak is active:**
+```
+cloak › list ───────────────────────────────────────────
+```
 
 **Business rules:**
-- The message is shown only when a cloak is active
-- The message does not delay or block Claude Code launch
-- The message goes to stderr (does not interfere with Claude Code's stdout)
-- Only shown on TTY
-- Shown on every `claude` invocation (not one-time), so the user always knows which identity they're using
-- The message is rendered as a box using box-drawing characters, matching the terminal width, visually stacking above Claude Code's own header
+- Displayed at the top of every `cloak` command and every `claude` launch (via shell function)
+- The trailing bar (`─`) fills to the terminal width
+- Goes to stderr (does not interfere with stdout data or --print-env eval)
+- Only shown on TTY (suppressed in pipes)
+- Command name is bold, profile and email are dim
+- When no profile is active, only command name is shown
+- The `init` command does NOT show the context bar (its stdout is raw shell code)
 
 ---
 

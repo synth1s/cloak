@@ -32,14 +32,14 @@
 │   │   ├── delete.js        # claude account delete / rm
 │   │   ├── whoami.js        # claude account whoami
 │   │   ├── rename.js        # claude account rename
-│   │   ├── banner.js        # cloak banner (active cloak box)
 │   │   └── init.js          # cloak init (shell integration)
 │   └── lib/
 │       ├── paths.js         # Path constants and directory helpers
 │       ├── validate.js      # Account name validation
 │       ├── tip.js           # First-run shell integration tip
 │       ├── setup.js         # Automatic shell integration setup
-│       └── messages.js      # Centralized user-facing messages (i18n-ready)
+│       ├── messages.js      # Centralized user-facing messages (i18n-ready)
+│       └── context-bar.js   # Universal context bar (status indicator)
 ├── tests/
 │   ├── validate.test.js
 │   ├── paths.test.js
@@ -49,7 +49,7 @@
 │   ├── switch.test.js
 │   ├── delete.test.js
 │   ├── rename.test.js
-│   ├── banner.test.js
+│   ├── context-bar.test.js
 │   ├── init.test.js
 │   ├── tip.test.js
 │   └── setup.test.js
@@ -276,7 +276,7 @@ claude() {
     fi
   else
     if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-      command cloak banner 2>/dev/null >&2
+      command cloak context-bar claude 2>/dev/null >&2
     fi
     command claude "$@"
   fi
@@ -346,22 +346,17 @@ export function installToRcFile(rcFilePath)
 // Does NOT install if isAlreadyInstalled() returns true
 ```
 
-#### `commands/banner.js`
+#### `src/lib/context-bar.js` — Universal context bar
 
+```js
+export function renderContextBar(command, columns)
+// Reads getActiveProfile() and getAccountEmail()
+// Renders: cloak › <command> · <profile> ‹email› ─────
+// Falls back to: cloak › <command> ───── (when no profile active)
+// Output goes to stderr via process.stderr.write
+// Suppressed when !process.stderr.isTTY
+// The `command` parameter is the subcommand name (list, switch, whoami, etc.)
 ```
-Input: none
-Effects:
-  1. Read getActiveProfile()
-  2. If null → do nothing, exit silently
-  3. Render a box matching terminal width with the cloak name
-  4. Output to stdout (shell function redirects to stderr)
-Output format:
-  ╭──────────────────────────────────╮
-  │ 🔹 Wearing cloak "work"          │
-  ╰──────────────────────────────────╯
-```
-
-**Design:** the banner uses `process.stdout.columns` to match terminal width. Box-drawing characters (`╭╮│╰╯─`) create a visual that stacks naturally above Claude Code's own header.
 
 #### `commands/list.js`
 
@@ -609,17 +604,20 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-06 | `claude()` delegates other commands | — | Contains `command claude "$@"` |
 | I-07 | Sets CLOAK_SHELL_INTEGRATION env var | — | Stdout contains `export CLOAK_SHELL_INTEGRATION=1` |
 | I-08 | `claude account switch` does NOT call `command claude` | — | The `account switch` branch does not contain `command claude` after eval |
-| I-09 | Passthrough calls cloak banner when active | — | Else branch contains `command cloak banner` before `command claude` |
-| I-10 | Banner output goes to stderr | — | Else branch contains `>&2` on the banner line |
+| I-09 | Passthrough calls context-bar before claude | — | Else branch contains `command cloak context-bar claude` before `command claude` |
+| I-10 | Context-bar output goes to stderr | — | Else branch contains `>&2` on the context-bar line |
+| I-11 | `-a` branch calls context-bar before claude | — | `-a` branch contains `command cloak context-bar claude` before `command claude` |
+| I-12 | `-a` context-bar goes to stderr | — | `-a` branch context-bar line contains `>&2` |
 
-#### `tests/banner.test.js` — Banner command
+#### `tests/context-bar.test.js` — Context bar
 
 | ID | Scenario | Precondition | Expected |
 |----|----------|-------------|----------|
-| B-01 | Renders box with cloak name | Active profile set | Output contains box characters and cloak name |
-| B-02 | No output when no cloak active | `CLAUDE_CONFIG_DIR` not set | Empty output |
-| B-03 | Box width matches terminal columns | `columns = 80` | Box lines are 80 chars wide |
-| B-04 | Contains wearing message | Active profile set | Output contains `Wearing cloak` |
+| CB-01 | Renders with command, profile and email | Active profile with email | Contains `cloak ›`, command, profile, `‹email›` |
+| CB-02 | Suppressed when not a TTY | `stderr.isTTY = false` | Empty output |
+| CB-03 | Bar fills to terminal width | `columns = 80` | Line length is 80 chars |
+| CB-04 | Shows only command when no profile active | No `CLAUDE_CONFIG_DIR` | Contains command, no profile |
+| CB-05 | Gracefully handles missing email | Profile without .claude.json | Shows profile without email |
 
 ---
 
