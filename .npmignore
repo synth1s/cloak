@@ -3,4 +3,6 @@ docs/
 .claude/
 .git/
 .gitignore
+.env*
+*.env
 CLAUDE.md

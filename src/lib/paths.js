@@ -40,7 +40,7 @@ export function profileSettingsPath(name) {
 
 export function ensureProfilesDir() {
   if (!existsSync(PROFILES_DIR)) {
-    mkdirSync(PROFILES_DIR, { recursive: true })
+    mkdirSync(PROFILES_DIR, { recursive: true, mode: 0o700 })
   }
 }
 

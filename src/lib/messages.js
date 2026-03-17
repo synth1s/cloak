@@ -137,7 +137,7 @@ export function wearingCloak(name) {
 // --- Print-env (stdout, no chalk — evaluated by shell) ---
 
 export function printEnvExport(dir) {
-  return `export CLAUDE_CONFIG_DIR=${dir}\n`
+  return `export CLAUDE_CONFIG_DIR="${dir}"\n`
 }
 
 export function printEnvEcho(name) {

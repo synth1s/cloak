@@ -1,6 +1,9 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
+
+const MARKER = '# Added by @synth1s/cloak'
+const INIT_LINE = 'eval "$(cloak init)"'
 
 function getHome() {
   return process.env.HOME || homedir()
@@ -22,16 +25,21 @@ export function isAlreadyInstalled(rcFilePath) {
 
 export function installToRcFile(rcFilePath) {
   if (!existsSync(rcFilePath)) {
-    writeFileSync(rcFilePath, 'eval "$(cloak init)"\n')
+    writeFileSync(rcFilePath, `${MARKER}\n${INIT_LINE}\n`)
     return
   }
 
-  // Read existing content and remove ALL lines containing 'cloak init'
+  // Backup before modifying
+  copyFileSync(rcFilePath, rcFilePath + '.cloak-backup')
+
+  // Remove ALL lines containing 'cloak init' or the marker
   const content = readFileSync(rcFilePath, 'utf8')
   const lines = content.split('\n')
-  const cleaned = lines.filter(line => !line.includes('cloak init'))
+  const cleaned = lines.filter(line =>
+    !line.includes('cloak init') && line !== MARKER
+  )
   const cleanedContent = cleaned.join('\n').replace(/\n{3,}/g, '\n\n')
 
-  // Write cleaned content + fresh init line
-  writeFileSync(rcFilePath, cleanedContent.trimEnd() + '\neval "$(cloak init)"\n')
+  // Append fresh marker + init line
+  writeFileSync(rcFilePath, cleanedContent.trimEnd() + `\n${MARKER}\n${INIT_LINE}\n`)
 }

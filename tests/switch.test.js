@@ -140,4 +140,10 @@ describe('switch', () => {
     })
     assert.equal(stdout, '', 'error must not leak to stdout with --print-env')
   })
+
+  it('S-10: --print-env export path is quoted for shell safety', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
+    assert.ok(output.includes('CLAUDE_CONFIG_DIR="'), 'path is double-quoted')
+  })
 })

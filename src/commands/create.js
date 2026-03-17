@@ -1,4 +1,4 @@
-import { existsSync, copyFileSync, mkdirSync } from 'fs'
+import { existsSync, copyFileSync, mkdirSync, chmodSync } from 'fs'
 import inquirer from 'inquirer'
 import {
   claudeAuthPath,
@@ -62,13 +62,15 @@ export async function createAccount(name, options = {}) {
 
   ensureProfilesDir()
   const dir = profileDir(name)
-  mkdirSync(dir, { recursive: true })
+  mkdirSync(dir, { recursive: true, mode: 0o700 })
 
   copyFileSync(authSource, profileAuthPath(name))
+  chmodSync(profileAuthPath(name), 0o600)
 
   const settingsSource = claudeSettingsPath()
   if (existsSync(settingsSource)) {
     copyFileSync(settingsSource, profileSettingsPath(name))
+    chmodSync(profileSettingsPath(name), 0o600)
   }
 
   console.log(msg.cloakCreated(name))

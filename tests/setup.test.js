@@ -79,4 +79,30 @@ describe('setup', () => {
     const matches = content.match(/cloak init/g)
     assert.equal(matches.length, 1)
   })
+
+  it('SE-09: installToRcFile creates backup before modifying', () => {
+    const rcFile = path.join(TMP, '.bashrc')
+    fs.writeFileSync(rcFile, '# original content\n')
+    installToRcFile(rcFile)
+    assert.ok(fs.existsSync(rcFile + '.cloak-backup'), 'backup file created')
+    const backup = fs.readFileSync(rcFile + '.cloak-backup', 'utf8')
+    assert.equal(backup, '# original content\n', 'backup contains original content')
+  })
+
+  it('SE-10: installToRcFile adds marker comment', () => {
+    const rcFile = path.join(TMP, '.bashrc')
+    fs.writeFileSync(rcFile, '# existing\n')
+    installToRcFile(rcFile)
+    const content = fs.readFileSync(rcFile, 'utf8')
+    assert.ok(content.includes('# Added by @synth1s/cloak'), 'marker comment present')
+  })
+
+  it('SE-11: installToRcFile removes old marker on reinstall', () => {
+    const rcFile = path.join(TMP, '.bashrc')
+    fs.writeFileSync(rcFile, '# config\n# Added by @synth1s/cloak\neval "$(cloak init)"\n')
+    installToRcFile(rcFile)
+    const content = fs.readFileSync(rcFile, 'utf8')
+    const markers = content.match(/Added by @synth1s\/cloak/g)
+    assert.equal(markers.length, 1, 'only one marker after reinstall')
+  })
 })
