@@ -1,20 +1,20 @@
 import chalk from 'chalk'
-import { getActiveProfile } from '../lib/paths.js'
+import { getActiveProfile, getAccountEmail } from '../lib/paths.js'
 
 export function showBanner(columns) {
   const name = getActiveProfile()
   if (!name) return
 
   const cols = columns || process.stderr.columns || process.stdout.columns || 80
-  const msg = `cloak › ${name}`
+  const email = getAccountEmail(name)
+  const msg = email ? `cloak › ${name} — ${email}` : `cloak › ${name}`
   const inner = cols - 2
   const contentLen = msg.length + 2
   const pad = Math.max(0, inner - contentLen)
 
-  const blue = chalk.blue
-  const top = blue('╭' + '─'.repeat(inner) + '╮')
-  const mid = blue('│') + ' ' + chalk.bold(msg) + ' '.repeat(pad) + ' ' + blue('│')
-  const bot = blue('╰' + '─'.repeat(inner) + '╯')
+  const top = '╭' + '─'.repeat(inner) + '╮'
+  const mid = '│ ' + chalk.bold(msg) + ' '.repeat(pad) + ' │'
+  const bot = '╰' + '─'.repeat(inner) + '╯'
 
   process.stdout.write(top + '\n' + mid + '\n' + bot + '\n')
 }
