@@ -60,4 +60,23 @@ describe('setup', () => {
     const matches = content.match(/cloak init/g)
     assert.equal(matches.length, 1)
   })
+
+  it('SE-07: installToRcFile removes duplicates and keeps exactly one', () => {
+    const rcFile = path.join(TMP, '.bashrc')
+    fs.writeFileSync(rcFile, '# config\neval "$(cloak init)"\nexport FOO=bar\neval "$(cloak init)"\n')
+    installToRcFile(rcFile)
+    const content = fs.readFileSync(rcFile, 'utf8')
+    const matches = content.match(/cloak init/g)
+    assert.equal(matches.length, 1)
+    assert.ok(content.includes('export FOO=bar'), 'preserves other config lines')
+  })
+
+  it('SE-08: installToRcFile cleans up then adds fresh line on dirty file', () => {
+    const rcFile = path.join(TMP, '.bashrc')
+    fs.writeFileSync(rcFile, 'eval "$(cloak init)"\neval "$(cloak init)"\neval "$(cloak init)"\n')
+    installToRcFile(rcFile)
+    const content = fs.readFileSync(rcFile, 'utf8')
+    const matches = content.match(/cloak init/g)
+    assert.equal(matches.length, 1)
+  })
 })

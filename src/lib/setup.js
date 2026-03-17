@@ -21,7 +21,17 @@ export function isAlreadyInstalled(rcFilePath) {
 }
 
 export function installToRcFile(rcFilePath) {
-  if (isAlreadyInstalled(rcFilePath)) return
-  const line = '\neval "$(cloak init)"\n'
-  writeFileSync(rcFilePath, line, { flag: 'a' })
+  if (!existsSync(rcFilePath)) {
+    writeFileSync(rcFilePath, 'eval "$(cloak init)"\n')
+    return
+  }
+
+  // Read existing content and remove ALL lines containing 'cloak init'
+  const content = readFileSync(rcFilePath, 'utf8')
+  const lines = content.split('\n')
+  const cleaned = lines.filter(line => !line.includes('cloak init'))
+  const cleanedContent = cleaned.join('\n').replace(/\n{3,}/g, '\n\n')
+
+  // Write cleaned content + fresh init line
+  writeFileSync(rcFilePath, cleanedContent.trimEnd() + '\neval "$(cloak init)"\n')
 }
