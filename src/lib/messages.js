@@ -71,7 +71,7 @@ export function updateSessionAfterRename(newName) {
 // --- Info / hints ---
 
 export function suggestCreate(name) {
-  return chalk.dim(`  Try: claude account create ${name || '<name>'}`)
+  return chalk.dim(`  Try: cloak create ${name || '<name>'}`)
 }
 
 export function suggestSwitchFirst() {
@@ -121,9 +121,10 @@ export function setupManualCommand(rcFile, name) {
 
 // --- Tip ---
 
-export function shellIntegrationTip() {
+export function shellIntegrationTip(rcFile) {
+  const file = rcFile || '~/.bashrc'
   return chalk.dim(`\n${icon.tip} Tip: Enable "claude -a" and "claude account" with:\n`) +
-    chalk.dim('   echo \'eval "$(cloak init)"\' >> ~/.bashrc && source ~/.bashrc\n\n')
+    chalk.dim(`   echo 'eval "$(cloak init)"' >> ${file} && source ${file}\n\n`)
 }
 
 // --- Print-env (stdout, no chalk — evaluated by shell) ---
@@ -133,7 +134,7 @@ export function printEnvExport(dir) {
 }
 
 export function printEnvEcho(name) {
-  return `echo "${cloakSwitched(name)}"\n`
+  return `echo "Now wearing cloak ${name}."\n`
 }
 
 // --- Prompt messages ---
@@ -142,6 +143,7 @@ export const prompts = {
   accountName: 'Name your cloak:',
   overwriteConfirm: (name) => `Cloak "${name}" already exists. Replace it?`,
   deleteConfirm: (name) => `Remove cloak "${name}"? This can't be undone.`,
+  renameConfirm: (oldName, newName) => `Rename cloak "${oldName}" to "${newName}"?`,
   setupChoice: 'How would you like to proceed?',
   setupAuto: 'Set it up now (recommended)',
   setupManual: 'Show me the manual steps',

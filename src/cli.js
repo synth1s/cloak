@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { program } from 'commander'
+import { program, Option } from 'commander'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -33,7 +33,7 @@ program
   .command('switch <name>')
   .alias('use')
   .description('Wear a different cloak')
-  .option('--print-env', 'Output export command for eval (used by shell integration)')
+  .addOption(new Option('--print-env').hideHelp())
   .action((name, opts) => switchAccount(name, { printEnv: opts.printEnv }))
 
 program
@@ -56,11 +56,11 @@ program
 program
   .command('rename <old> <new>')
   .description('Rename a cloak')
-  .action(renameAccount)
+  .action((oldName, newName) => renameAccount(oldName, newName))
 
 program
   .command('init')
-  .description('Output shell integration code')
+  .description('Output shell integration code (use with eval)')
   .action(initShell)
 
 program.parse()

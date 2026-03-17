@@ -1,6 +1,6 @@
 {
   "name": "@synth1s/cloak",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "Cloak your Claude. Switch identities in seconds.",
   "type": "module",
   "bin": {

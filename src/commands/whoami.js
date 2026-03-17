@@ -4,7 +4,8 @@ import * as msg from '../lib/messages.js'
 export function whoami() {
   const active = getActiveProfile()
   if (!active) {
-    console.log(msg.noCloak())
+    // stderr for info messages, so piping `cloak whoami` gives clean output
+    console.error(msg.noCloak())
     return null
   }
   console.log(active)
