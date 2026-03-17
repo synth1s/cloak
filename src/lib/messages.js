@@ -127,6 +127,12 @@ export function shellIntegrationTip(rcFile) {
     chalk.dim(`   echo 'eval "$(cloak init)"' >> ${file} && source ${file}\n\n`)
 }
 
+// --- Active cloak indicator (shown on claude launch) ---
+
+export function wearingCloak(name) {
+  return `🔹 Wearing cloak "${name}"`
+}
+
 // --- Print-env (stdout, no chalk — evaluated by shell) ---
 
 export function printEnvExport(dir) {

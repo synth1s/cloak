@@ -272,6 +272,13 @@ claude() {
       command claude "$@"
     fi
   else
+    if [ -n "$CLAUDE_CONFIG_DIR" ]; then
+      local _cloak_name
+      _cloak_name=$(command cloak whoami 2>/dev/null)
+      if [ -n "$_cloak_name" ]; then
+        echo "🔹 Wearing cloak \"$_cloak_name\"" >&2
+      fi
+    fi
     command claude "$@"
   fi
 }
@@ -281,6 +288,7 @@ claude() {
 - `cloak()` intercepts only `switch`/`use` — all other cloak commands pass through to the binary
 - `claude()` intercepts `account` subcommands and `-a` — everything else passes through to the original claude
 - Both functions use `eval` to set `CLAUDE_CONFIG_DIR` in the parent shell
+- The passthrough branch shows which cloak is active before launching claude (message goes to stderr)
 
 #### `commands/create.js`
 
@@ -580,6 +588,8 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-06 | `claude()` delegates other commands | — | Contains `command claude "$@"` |
 | I-07 | Sets CLOAK_SHELL_INTEGRATION env var | — | Stdout contains `export CLOAK_SHELL_INTEGRATION=1` |
 | I-08 | `claude account switch` does NOT call `command claude` | — | The `account switch` branch does not contain `command claude` after eval |
+| I-09 | Passthrough shows active cloak name | — | Else branch contains `cloak whoami` before `command claude` |
+| I-10 | Cloak message goes to stderr | — | Else branch contains `>&2` on the echo line |
 
 ---
 

@@ -338,6 +338,30 @@ When any other `cloak` command runs without shell integration, a non-blocking ti
 
 ---
 
+### UC-09: Show active cloak on claude launch
+
+**Actor:** User launching Claude Code with shell integration active.
+
+**Main flow:**
+1. User runs `claude` (or `claude` with any arguments)
+2. Shell function checks if `CLAUDE_CONFIG_DIR` is set and points to a valid cloak
+3. If yes, displays: `🔹 Wearing cloak "<name>"`
+4. Proceeds to launch Claude Code normally
+
+**Alternative flow — no cloak active:**
+1. `CLAUDE_CONFIG_DIR` is not set or doesn't point to a cloak
+2. No message is shown
+3. Claude Code launches normally
+
+**Business rules:**
+- The message is shown only when a cloak is active
+- The message does not delay or block Claude Code launch
+- The message goes to stderr (does not interfere with Claude Code's stdout)
+- Only shown on TTY
+- Shown on every `claude` invocation (not one-time), so the user always knows which identity they're using
+
+---
+
 ## 5. Full journey flows
 
 ### 5.1 First-time setup (direct mode — zero config)
