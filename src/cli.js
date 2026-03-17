@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { program, Option } from 'commander'
+import { program } from 'commander'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -19,6 +19,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'))
 
 showTipIfNeeded()
+
+// Extract --print-env before commander parses (internal flag, not user-facing)
+const _printEnv = process.argv.includes('--print-env')
+const argv = process.argv.filter(a => a !== '--print-env')
 
 program
   .name('cloak')
@@ -52,9 +56,8 @@ program
   .alias('use')
   .description('Wear a different cloak')
   .action((name) => {
-    const printEnv = process.argv.includes('--print-env')
-    if (!printEnv) renderContextBar('switch')
-    return switchAccount(name, { printEnv })
+    if (!_printEnv) renderContextBar('switch')
+    return switchAccount(name, { printEnv: _printEnv })
   })
 
 program
@@ -102,4 +105,4 @@ program
   .description('Output shell integration code')
   .action(initShell)
 
-program.parse()
+program.parse(argv)
