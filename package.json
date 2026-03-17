@@ -18,7 +18,11 @@
     "cli",
     "switch",
     "multi-account",
-    "cloak"
+    "cloak",
+    "switch-account",
+    "identity",
+    "multi-user",
+    "config"
   ],
   "author": "synth1s",
   "license": "MIT",

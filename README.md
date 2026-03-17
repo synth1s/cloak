@@ -4,17 +4,23 @@
 [![npm](https://img.shields.io/npm/v/@synth1s/cloak)](https://www.npmjs.com/package/@synth1s/cloak)
 [![license](https://img.shields.io/npm/l/@synth1s/cloak)](LICENSE)
 
-> Cloak your Claude. Switch identities in seconds.
+**Stop logging out. Start switching.**
 
-Every developer wears a different cloak. One for work, one for personal projects, one for that freelance gig. **Cloak** lets you dress your Claude Code in the right identity — and switch between them without breaking a sweat.
+Multiple Claude Code accounts — one command. Sessions, tokens, MCP servers, and settings fully preserved. Concurrent sessions across terminals. [181+ developers asked for this.](https://github.com/anthropics/claude-code/issues/18435)
 
-## The problem
+## Before / After
 
-Claude Code stores your session in `~/.claude.json`. There's no built-in support for multiple accounts, so switching between personal and work means running `/logout` and `/login` every time — losing your session state in the process.
+**Before Cloak:**
+```
+claude → /logout → /login (lose session) → work on project
+claude → /logout → /login (lose session) → personal use
+```
 
-## The solution
-
-Cloak gives each account its own isolated directory using Claude Code's official [`CLAUDE_CONFIG_DIR`](https://code.claude.com/docs/en/env-vars) environment variable. Each identity stays separate. No file conflicts. No data loss. Full support for concurrent sessions.
+**After Cloak:**
+```
+claude -a work     # instant. sessions preserved.
+claude -a home     # in another terminal. at the same time.
+```
 
 ## Install
 
@@ -22,21 +28,24 @@ Cloak gives each account its own isolated directory using Claude Code's official
 npm install -g @synth1s/cloak
 ```
 
-## Quick start
+## 3 steps to get started
 
 ```bash
-# Save your current Claude session
+# 1. Save your current Claude session
 cloak create work
 
-# Log out, log in with another account, then:
+# 2. Log out, log in with another account in Claude, then:
 cloak create home
 
-# Set up shell integration (recommended)
-echo 'eval "$(cloak init)"' >> ~/.bashrc && source ~/.bashrc
+# 3. Set up shell integration
+cloak switch work    # follows the guided setup on first run
+```
 
-# Throw on a cloak and go
-claude -a work
-claude -a home
+That's it. From now on:
+
+```bash
+claude -a work       # switch and launch
+claude -a home       # in another terminal, at the same time
 ```
 
 ## Commands
@@ -44,109 +53,114 @@ claude -a home
 | Command | Description |
 |---------|-------------|
 | `cloak create [name]` | Save current session as a new cloak |
-| `cloak switch <name>` | Set `CLAUDE_CONFIG_DIR` for the current shell |
+| `cloak switch <name>` | Wear a different cloak |
 | `cloak list` | See all cloaks in your wardrobe |
 | `cloak whoami` | Which cloak are you wearing? |
 | `cloak delete <name>` | Discard a cloak |
 | `cloak rename <old> <new>` | Rename a cloak |
-| `cloak init` | Output shell integration code |
 
-## Shell integration (recommended)
-
-Add to your `.bashrc` or `.zshrc`:
-
-```bash
-eval "$(cloak init)"
-```
-
-This enables:
+With shell integration (`eval "$(cloak init)"`):
 
 | Command | Description |
 |---------|-------------|
-| `claude -a <name>` | Throw on a cloak and launch Claude |
-| `claude -a <name> [args...]` | Throw on a cloak and launch with arguments |
-| `claude account create [name]` | Save current session as a new cloak |
-| `claude account switch <name>` | Wear a different cloak |
-| `claude account list` | See all cloaks in your wardrobe |
-| `claude account whoami` | Which cloak are you wearing? |
-| `claude account delete <name>` | Discard a cloak |
-| `claude account rename <old> <new>` | Rename a cloak |
+| `claude -a <name>` | Switch and launch Claude |
+| `claude account <cmd>` | All cloak commands via claude |
 
 ## Concurrent sessions
 
-Different terminal, different cloak. No conflicts.
+Different terminal, different identity. No conflicts.
 
 ```bash
-# Terminal A — wearing the work cloak:
+# Terminal A:
 claude -a work
 
-# Terminal B — wearing the home cloak:
+# Terminal B (at the same time):
 claude -a home
+```
+
+Each account is a completely isolated directory. No file overlap, no token conflicts.
+
+## Context bar
+
+Every command shows which identity is active:
+
+```
+cloak > list . work <filipe@company.com> ────────────────────────────
+
+Your Cloaks
+
+  > work (active) — filipe@company.com
+    home — filipe@personal.com
 ```
 
 ## How it works
 
-Each cloak is an isolated directory that acts as a [`CLAUDE_CONFIG_DIR`](https://code.claude.com/docs/en/env-vars):
+Cloak uses Claude Code's official [`CLAUDE_CONFIG_DIR`](https://code.claude.com/docs/en/env-vars) environment variable. Each account gets its own directory:
 
 ```
 ~/.cloak/
 └── profiles/
-    ├── work/                # Work identity
+    ├── work/                # complete, isolated config
     │   ├── .claude.json
     │   ├── settings.json
     │   └── ...
-    └── home/                # Personal identity
+    └── home/
         ├── .claude.json
         └── ...
 ```
 
-When you run `claude -a work`, Cloak sets `CLAUDE_CONFIG_DIR=~/.cloak/profiles/work` in your current shell and launches Claude Code. Each terminal gets its own environment, so you can wear different cloaks simultaneously.
+Switching changes which directory Claude Code reads from. Nothing is copied, moved, or overwritten.
 
 ## FAQ
 
-### Will switching accounts overwrite my settings or preferences?
+<details>
+<summary><strong>Will switching overwrite my settings?</strong></summary>
 
-No. Each account is a completely isolated directory. Switching only changes which directory Claude Code reads from — it doesn't copy, move, or overwrite any files. Your settings, MCP servers, and preferences for each account stay exactly where they are.
+No. Each account is a completely isolated directory. Switching only changes which directory Claude Code reads from. Your settings, MCP servers, and preferences for each account stay exactly where they are.
+</details>
 
-### Can I lose data when running multiple accounts simultaneously?
+<details>
+<summary><strong>Are token renewals preserved?</strong></summary>
 
-No, as long as each terminal uses a **different** account. Each account has its own directory (`~/.cloak/profiles/<name>/`), so there's no file overlap. Terminal A writing to `work/` and Terminal B writing to `home/` never interfere.
+Yes. When Claude Code renews your OAuth token during a session, it writes to the active account's directory. When you switch away and back, the renewed token is still there.
+</details>
 
-### What about token renewals? Are they preserved when I switch?
+<details>
+<summary><strong>Can I lose data with multiple accounts running?</strong></summary>
 
-Yes. When Claude Code renews your OAuth token during a session, it writes the new token to the active account's directory. When you switch away and back, the renewed token is still there — Cloak never touches those files.
+No, as long as each terminal uses a different account. Each has its own directory — no file overlap.
+</details>
 
-### What happens if I create a new account? Does it affect existing ones?
+<details>
+<summary><strong>Is my auth token safe?</strong></summary>
 
-No. `cloak create` copies your current session into a **new** directory. Existing accounts are not modified. It's a snapshot, not a move.
+Cloak never transmits, logs, or modifies your tokens. It only copies files during `cloak create` and changes an environment variable during `cloak switch`. All data stays local. Credential files are created with restrictive permissions (0o600).
+</details>
 
-### What if I run the same account in two terminals at once?
+<details>
+<summary><strong>What if I uninstall Cloak?</strong></summary>
 
-This is not recommended. Two Claude Code instances writing to the same directory (`~/.cloak/profiles/work/`) can cause token conflicts. This is a Claude Code limitation, not specific to Cloak — the same issue exists without Cloak if you open two `claude` instances normally.
+Your account directories remain in `~/.cloak/`. Claude Code works normally with its default config. To clean up: `rm -rf ~/.cloak`
+</details>
 
-### What happens if I uninstall Cloak?
+<details>
+<summary><strong>Does it work with IDE extensions?</strong></summary>
 
-Your account directories remain in `~/.cloak/`. Claude Code continues to work normally with its default config. To use a saved account manually, set the environment variable:
-
-```bash
-export CLAUDE_CONFIG_DIR=~/.cloak/profiles/work
-claude
-```
-
-To clean up completely: `rm -rf ~/.cloak`
-
-### Is my auth token safe?
-
-Cloak never transmits, logs, or modifies your tokens. It only copies files during `cloak create` (from Claude Code's config to a profile directory) and changes an environment variable during `cloak switch`. All data stays local on your machine.
-
-### Does Cloak work with Claude Code IDE extensions (VSCode, JetBrains)?
-
-IDE extensions may not respect `CLAUDE_CONFIG_DIR` ([known limitation](https://github.com/anthropics/claude-code/issues/4739)). Cloak is designed for terminal-based Claude Code usage.
+IDE extensions may not respect `CLAUDE_CONFIG_DIR` ([known limitation](https://github.com/anthropics/claude-code/issues/4739)). Cloak is designed for terminal-based Claude Code.
+</details>
 
 ## Requirements
 
 - Node.js >= 18
 - bash or zsh (for shell integration)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
