@@ -189,7 +189,7 @@ Responsibilities:
 - Shebang `#!/usr/bin/env node`
 - Call `showTipIfNeeded()` before command execution
 - Read version from `package.json`
-- Register all 7 commands in commander
+- Register all 9 commands in commander
 - Call `program.parse()`
 
 ```js
@@ -200,6 +200,8 @@ Responsibilities:
 // cloak delete <name>               → commands/delete.js
 // cloak whoami                      → commands/whoami.js
 // cloak rename <old> <new>          → commands/rename.js
+// cloak bind <name>                 → commands/bind.js
+// cloak unbind                      → commands/unbind.js
 // cloak init                        → commands/init.js
 ```
 
@@ -275,8 +277,19 @@ claude() {
       command claude "$@"
     fi
   else
+    if [ -f ".cloak" ]; then
+      local _bind_name
+      _bind_name=$(cat .cloak 2>/dev/null | tr -d '[:space:]')
+      if [ -n "$_bind_name" ]; then
+        local output
+        output=$(command cloak switch --print-env "$_bind_name" 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          eval "$output"
+        fi
+      fi
+    fi
     if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-      command cloak context-bar claude 2>/dev/null >&2
+      command cloak context-bar claude
     fi
     command claude "$@"
   fi
@@ -286,6 +299,8 @@ claude() {
 **Notes:**
 - `cloak()` intercepts only `switch`/`use` — all other cloak commands pass through to the binary
 - `claude()` intercepts `account` subcommands and `-a` — everything else passes through to the original claude
+- The passthrough branch reads `.cloak` file from the current directory before launching — auto-switches if present
+- Explicit `-a` overrides `.cloak` (the `-a` branch runs first)
 - Both functions use `eval` to set `CLAUDE_CONFIG_DIR` in the parent shell
 - The passthrough branch shows which cloak is active before launching claude (message goes to stderr)
 
@@ -327,6 +342,28 @@ Effects:
 ```
 
 **`--print-env` flag:** used internally by the shell function. Not documented to the user.
+
+#### `commands/bind.js`
+
+```
+Input: name (string)
+Effects:
+  1. Validate name
+  2. Check profile exists (if not → error, exit 1)
+  3. Write name to .cloak file in current working directory
+  4. Display: + Bound this directory to cloak "<name>".
+```
+
+#### `commands/unbind.js`
+
+```
+Input: none
+Effects:
+  1. Check if .cloak file exists in current directory
+  2. If not → error: "No .cloak file in this directory."
+  3. Remove .cloak file
+  4. Display: + Unbound this directory.
+```
 
 #### `src/lib/setup.js` — Automatic shell integration setup
 
@@ -608,6 +645,19 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | I-10 | Context-bar output goes to stderr | — | Else branch contains `>&2` on the context-bar line |
 | I-11 | `-a` branch calls context-bar before claude | — | `-a` branch contains `command cloak context-bar claude` before `command claude` |
 | I-12 | `-a` context-bar goes to stderr | — | `-a` branch context-bar line contains `>&2` |
+| I-13 | Passthrough reads `.cloak` file | — | Else branch contains `cat .cloak` or reads `.cloak` file |
+| I-14 | `.cloak` auto-switch happens before context-bar | — | `.cloak` read comes before `context-bar` in else branch |
+
+#### `tests/bind.test.js` — Bind/unbind commands
+
+| ID | Scenario | Precondition | Expected |
+|----|----------|-------------|----------|
+| BI-01 | bind creates .cloak file | Profile exists | `.cloak` file created with profile name |
+| BI-02 | bind fails for non-existent profile | — | Error, exit 1 |
+| BI-03 | bind fails for invalid name | — | Error, exit 1 |
+| BI-04 | unbind removes .cloak file | `.cloak` exists | File removed |
+| BI-05 | unbind fails when no .cloak file | — | Error message |
+| BI-06 | .cloak file contains only the profile name | After bind | File content is just the name, no whitespace |
 
 #### `tests/context-bar.test.js` — Context bar
 

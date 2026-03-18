@@ -375,6 +375,45 @@ cloak › list ─────────────────────�
 
 ---
 
+### UC-10: Auto-switch by project directory
+
+**Actor:** Developer working on multiple projects with different accounts.
+
+**Description:** a `.cloak` file in a project's root directory indicates which profile to use. When the user runs `claude` from that directory, the shell function reads the file and switches to the indicated profile automatically.
+
+**Setup flow:**
+1. User navigates to a project directory
+2. User runs `cloak bind <name>` (e.g., `cloak bind work`)
+3. System creates a `.cloak` file in the current directory containing the profile name
+4. From now on, running `claude` in this directory automatically uses that profile
+
+**Main flow (with shell integration):**
+1. User runs `claude` in a directory containing a `.cloak` file
+2. Shell function reads the `.cloak` file
+3. Shell function switches to the indicated profile (eval switch)
+4. Claude Code launches with the correct profile
+
+**Alternative flow — no `.cloak` file:**
+1. User runs `claude` in a directory without a `.cloak` file
+2. Shell function uses the currently active profile (no change)
+
+**Alternative flow — `.cloak` references non-existent profile:**
+1. Shell function reads the profile name from `.cloak`
+2. Profile does not exist
+3. Error message shown, Claude Code does not launch
+
+**Business rules:**
+- The `.cloak` file contains only the profile name (single line, no whitespace)
+- The file is opt-in — directories without `.cloak` behave as before
+- `cloak bind` validates the profile name and checks it exists
+- `cloak unbind` removes the `.cloak` file from the current directory
+- The `.cloak` file should be added to `.gitignore` (contains environment-specific info)
+- Auto-switch is silent — no extra confirmation, just the context bar showing the active profile
+- Works with `claude -a` too — explicit `-a` overrides the `.cloak` file
+- Pattern follows `.nvmrc`, `.node-version`, `.ruby-version` convention
+
+---
+
 ## 5. Full journey flows
 
 ### 5.1 First-time setup (direct mode — zero config)
