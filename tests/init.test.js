@@ -123,4 +123,27 @@ describe('init', () => {
     assert.ok(ctxIdx > -1, '-a branch contains context-bar')
     assert.ok(claudeIdx > ctxIdx, 'command claude comes after context-bar in -a branch')
   })
+
+  it('I-13: passthrough reads .cloak file', () => {
+    const output = getInitScript()
+    const func = extractFunction(output, 'claude')
+    const lines = func.split('\n')
+
+    const elseIdx = lines.findLastIndex(l => l.trim() === 'else')
+    const afterElse = lines.slice(elseIdx)
+    const cloakFileIdx = afterElse.findIndex(l => l.includes('.cloak'))
+    assert.ok(cloakFileIdx > -1, 'else branch reads .cloak file')
+  })
+
+  it('I-14: .cloak auto-switch happens before context-bar', () => {
+    const output = getInitScript()
+    const func = extractFunction(output, 'claude')
+    const lines = func.split('\n')
+
+    const elseIdx = lines.findLastIndex(l => l.trim() === 'else')
+    const afterElse = lines.slice(elseIdx)
+    const cloakFileIdx = afterElse.findIndex(l => l.includes('.cloak'))
+    const ctxIdx = afterElse.findIndex(l => l.includes('context-bar'))
+    assert.ok(cloakFileIdx < ctxIdx, '.cloak read comes before context-bar')
+  })
 })

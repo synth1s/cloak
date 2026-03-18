@@ -128,6 +128,20 @@ export function shellIntegrationTip(rcFile) {
     chalk.dim(`   echo 'eval "$(cloak init)"' >> ${file} && source ${file}\n\n`)
 }
 
+// --- Bind/unbind ---
+
+export function cloakBound(name) {
+  return `${icon.success} Bound this directory to cloak ${chalk.bold(`"${name}"`)}.`
+}
+
+export function cloakUnbound() {
+  return `${icon.success} Unbound this directory.`
+}
+
+export function noCloakFile() {
+  return `${icon.error} No .cloak file in this directory.`
+}
+
 // --- Active cloak indicator (shown on claude launch) ---
 
 export function wearingCloak(name) {

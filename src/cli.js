@@ -13,6 +13,8 @@ import { listAccounts } from './commands/list.js'
 import { deleteAccount } from './commands/delete.js'
 import { whoami } from './commands/whoami.js'
 import { renameAccount } from './commands/rename.js'
+import { bindAccount } from './commands/bind.js'
+import { unbindAccount } from './commands/unbind.js'
 import { initShell } from './commands/init.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -92,6 +94,22 @@ program
   .action((oldName, newName) => {
     renderContextBar('rename')
     return renameAccount(oldName, newName)
+  })
+
+program
+  .command('bind <name>')
+  .description('Bind this directory to a cloak')
+  .action((name) => {
+    renderContextBar('bind')
+    return bindAccount(name)
+  })
+
+program
+  .command('unbind')
+  .description('Unbind this directory')
+  .action(() => {
+    renderContextBar('unbind')
+    return unbindAccount()
   })
 
 program
