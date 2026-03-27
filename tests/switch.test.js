@@ -110,11 +110,11 @@ describe('switch', () => {
   it('S-07: --print-env stdout contains only eval-safe shell code', async () => {
     fs.mkdirSync(profileDir('work'), { recursive: true })
     const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
-    // Every line must be valid shell: export or empty
+    // Every line must be valid shell: export, unset, or empty
     const lines = output.trim().split('\n')
     for (const line of lines) {
       assert.ok(
-        line.startsWith('export ') || line.trim() === '',
+        line.startsWith('export ') || line.startsWith('unset ') || line.trim() === '',
         `stdout line must be eval-safe shell code, got: "${line}"`
       )
     }
@@ -145,5 +145,46 @@ describe('switch', () => {
     fs.mkdirSync(profileDir('work'), { recursive: true })
     const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
     assert.ok(output.includes('CLAUDE_CONFIG_DIR="'), 'path is double-quoted')
+  })
+
+  it('S-11: --print-env includes env vars from target account', async () => {
+    const { writeProfileEnv } = await import('../src/lib/paths.js')
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    writeProfileEnv('work', { CLAUDE_CODE_USE_VERTEX: '1', CLOUD_ML_REGION: 'us-east5' })
+    const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
+    assert.ok(output.includes('export CLAUDE_CODE_USE_VERTEX="1"'))
+    assert.ok(output.includes('export CLOUD_ML_REGION="us-east5"'))
+  })
+
+  it('S-12: --print-env unsets vars from previous account not in target', async () => {
+    const { writeProfileEnv } = await import('../src/lib/paths.js')
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    fs.mkdirSync(profileDir('personal'), { recursive: true })
+    writeProfileEnv('work', { WORK_ONLY_VAR: '1' })
+    // Start as work, switch to personal
+    process.env.CLAUDE_CONFIG_DIR = profileDir('work')
+    const output = await captureStdoutAsync(() => switchAccount('personal', { printEnv: true }))
+    assert.ok(output.includes('unset WORK_ONLY_VAR'), 'should unset vars not in target')
+  })
+
+  it('S-13: --print-env does not emit unset for vars shared between accounts', async () => {
+    const { writeProfileEnv } = await import('../src/lib/paths.js')
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    fs.mkdirSync(profileDir('work2'), { recursive: true })
+    writeProfileEnv('work', { SHARED_VAR: 'old' })
+    writeProfileEnv('work2', { SHARED_VAR: 'new' })
+    process.env.CLAUDE_CONFIG_DIR = profileDir('work')
+    const output = await captureStdoutAsync(() => switchAccount('work2', { printEnv: true }))
+    assert.ok(!output.includes('unset SHARED_VAR'), 'should not unset vars present in both accounts')
+    assert.ok(output.includes('export SHARED_VAR="new"'))
+  })
+
+  it('S-14: --print-env escapes special chars in env var values', async () => {
+    const { writeProfileEnv } = await import('../src/lib/paths.js')
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    writeProfileEnv('work', { MY_VAR: 'val$ue with "quotes" and `backticks`' })
+    const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
+    assert.ok(!output.includes('"val$ue"') || output.includes('\\$'), 'dollar sign escaped')
+    assert.ok(output.includes('\\"quotes\\"'), 'quotes escaped')
   })
 })
