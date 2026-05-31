@@ -58,7 +58,7 @@ claude -a home       # in another terminal, at the same time
 | Command | Description |
 |---------|-------------|
 | `cloak create [name]` | Save current session as a new cloak |
-| `cloak switch <name>` | Wear a different cloak |
+| `cloak switch [name]` | Wear a different cloak (omit name to pick from a list) |
 | `cloak list` | See all cloaks in your wardrobe |
 | `cloak whoami` | Which cloak are you wearing? |
 | `cloak delete <name>` | Discard a cloak |
