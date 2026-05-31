@@ -75,6 +75,18 @@ describe('list', () => {
     const result = listAccounts()
     assert.equal(result.find(p => p.name === 'bare').email, null)
   })
+
+  it('L-08: shows provider label for provider cloaks', () => {
+    const dir = profileDir('glm')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'settings.json'), JSON.stringify({
+      env: { ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic', ANTHROPIC_AUTH_TOKEN: 't' }
+    }))
+    const result = listAccounts()
+    const entry = result.find(p => p.name === 'glm')
+    assert.equal(entry.email, null)
+    assert.ok(entry.provider.toLowerCase().includes('glm'))
+  })
 })
 
 fs.rmSync(TMP, { recursive: true, force: true })

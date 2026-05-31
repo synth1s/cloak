@@ -15,6 +15,7 @@ import { whoami } from './commands/whoami.js'
 import { renameAccount } from './commands/rename.js'
 import { bindAccount } from './commands/bind.js'
 import { unbindAccount } from './commands/unbind.js'
+import { addProvider } from './commands/provider.js'
 import { initShell } from './commands/init.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -36,6 +37,11 @@ Quick start:
   cloak create home              Save another session
   cloak switch work              Switch to a cloak
   cloak list                     See all your cloaks
+
+Use another model provider:
+  cloak provider glm             Add a GLM cloak (also: dashscope, kimi, deepseek)
+  cloak provider mine -u <url>   Add any Anthropic-compatible endpoint
+  cloak switch glm               Wear it — claude now talks to that provider
 
 Auto-switch by directory:
   cloak bind work                Bind current directory to a cloak
@@ -98,6 +104,24 @@ program
   .action((oldName, newName) => {
     renderContextBar('rename')
     return renameAccount(oldName, newName)
+  })
+
+program
+  .command('provider [name]')
+  .alias('add-provider')
+  .description('Add a custom model provider (GLM, DashScope, ...) as a cloak')
+  .option('-p, --provider <id>', 'provider preset id (glm, dashscope, kimi, deepseek) or "custom"')
+  .option('-u, --base-url <url>', 'Anthropic-compatible base URL (for custom providers)')
+  .option('-t, --token <token>', 'API token / auth key')
+  .option('-m, --model <model>', 'model name to use')
+  .action((name, options) => {
+    renderContextBar('provider')
+    return addProvider(name, {
+      provider: options.provider,
+      baseUrl: options.baseUrl,
+      token: options.token,
+      model: options.model,
+    })
   })
 
 program

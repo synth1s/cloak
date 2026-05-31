@@ -26,8 +26,10 @@ src/
     rename.js          — cloak rename
     bind.js            — cloak bind (auto-switch by directory)
     unbind.js          — cloak unbind
+    provider.js        — cloak provider (add custom Anthropic-compatible providers)
   lib/
     paths.js           — path constants, directory helpers, active account resolution
+    providers.js       — provider presets (GLM, DashScope, ...) + settings.json env helpers
     validate.js        — account name validation
     tip.js             — first-run shell integration tip
     setup.js           — automatic shell integration setup
@@ -67,8 +69,25 @@ cloak delete <name>                — discard a cloak (alias: rm)
 cloak rename <old> <new>           — rename a cloak
 cloak bind <name>                  — bind current directory to a cloak
 cloak unbind                       — remove directory binding
+cloak provider [name]              — add a custom model provider as a cloak (alias: add-provider)
 cloak init                         — output shell integration code
 ```
+
+### Custom model providers
+A cloak isn't limited to an Anthropic OAuth account — it can also target any
+Anthropic-compatible endpoint (GLM/Zhipu, Alibaba DashScope, Kimi, DeepSeek, or
+a custom URL). `cloak provider` writes the provider config into the cloak's
+`settings.json` `env` block:
+
+```json
+{ "env": { "ANTHROPIC_BASE_URL": "...", "ANTHROPIC_AUTH_TOKEN": "...", "ANTHROPIC_MODEL": "..." } }
+```
+
+Claude Code reads `settings.json` from `CLAUDE_CONFIG_DIR` and applies `env`
+automatically, so switching to a provider cloak (which already sets
+`CLAUDE_CONFIG_DIR`) makes `claude` talk to that provider. No file swapping, no
+shell exports beyond the existing `CLAUDE_CONFIG_DIR` — same isolation model as
+account cloaks. Presets live in `src/lib/providers.js`.
 
 With shell integration:
 ```

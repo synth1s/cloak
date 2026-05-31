@@ -96,4 +96,16 @@ describe('context-bar', () => {
     assert.ok(output.includes('bare'), 'contains profile')
     assert.ok(!output.includes('‹'), 'no email brackets')
   })
+
+  it('CB-06: shows provider label for provider cloaks', () => {
+    const dir = profileDir('glm')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'settings.json'), JSON.stringify({
+      env: { ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic', ANTHROPIC_AUTH_TOKEN: 't' }
+    }))
+    process.env.CLAUDE_CONFIG_DIR = profileDir('glm')
+    const output = captureStderr(() => renderContextBar('whoami', 80))
+    assert.ok(output.includes('glm'), 'contains profile')
+    assert.ok(output.includes('GLM'), 'contains provider label')
+  })
 })

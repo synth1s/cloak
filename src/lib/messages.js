@@ -98,12 +98,14 @@ export function accountListHeader() {
   return chalk.bold('\nYour Cloaks\n')
 }
 
-export function accountListItem(name, isActive, email) {
+export function accountListItem(name, isActive, email, provider) {
   const marker = isActive ? icon.active : icon.inactive
   const label = isActive ? chalk.green.bold(name) : chalk.white(name)
   const tag = isActive ? chalk.green(' (active)') : ''
-  const emailTag = email ? chalk.dim(` — ${email}`) : ''
-  return `  ${marker} ${label}${tag}${emailTag}`
+  let detailTag = ''
+  if (email) detailTag = chalk.dim(` — ${email}`)
+  else if (provider) detailTag = chalk.dim(` — via ${provider}`)
+  return `  ${marker} ${label}${tag}${detailTag}`
 }
 
 export function alreadyInstalled(rcFile) {
@@ -142,6 +144,24 @@ export function noCloakFile() {
   return `${icon.error} No .cloak file in this directory.`
 }
 
+// --- Providers ---
+
+export function providerCloakCreated(name, label) {
+  return `${icon.success} Provider cloak ${chalk.bold(`"${name}"`)} created ${chalk.dim(`(via ${label})`)}. Ready to wear!`
+}
+
+export function providerBaseUrlRequired() {
+  return `${icon.error} A base URL is required for a custom provider.`
+}
+
+export function providerTokenRequired() {
+  return `${icon.error} An API token is required.`
+}
+
+export function providerKeyHint(url) {
+  return chalk.dim(`  Get an API key: ${url}`)
+}
+
 // --- Active cloak indicator (shown on claude launch) ---
 
 export function wearingCloak(name) {
@@ -168,4 +188,10 @@ export const prompts = {
   setupChoice: 'How would you like to proceed?',
   setupAuto: 'Set it up now (recommended)',
   setupManual: 'Show me the manual steps',
+  providerName: 'Name your provider cloak:',
+  providerChoice: 'Which provider?',
+  providerCustom: 'Custom (Anthropic-compatible URL)',
+  providerBaseUrl: 'Base URL:',
+  providerToken: 'API token:',
+  providerModel: (def) => def ? `Model (default: ${def}):` : 'Model (optional):',
 }
