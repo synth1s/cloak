@@ -4,7 +4,7 @@
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Runtime | Node.js >= 18 (ESM) | Claude Code users already have Node.js installed |
+| Runtime | Node.js >= 20 (ESM) | Claude Code users already have Node.js installed. Floor is set by commander, which requires >=20 from v14 |
 | Distribution | npm | One `npm i -g` and you're ready. Supports `npx` without install |
 | Command parser | [commander](https://www.npmjs.com/package/commander) | Industry standard for Node.js CLIs. Lightweight, stable |
 | Colored output | [chalk](https://www.npmjs.com/package/chalk) | Zero dependencies (v5+). Native ESM |
@@ -699,12 +699,12 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
   "author": "synth1s",
   "license": "MIT",
   "dependencies": {
-    "commander": "^12.1.0",
     "chalk": "^5.3.0",
-    "inquirer": "^10.1.0"
+    "commander": "^14.0.3",
+    "inquirer": "^12.11.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "repository": {
     "type": "git",

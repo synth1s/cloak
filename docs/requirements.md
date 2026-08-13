@@ -539,7 +539,7 @@ When creating an account, Cloak needs to locate the current session files:
 - Install via `npm install -g @synth1s/cloak`
 - All commands work immediately after install via `cloak` binary (no setup required)
 - Shell integration (`eval "$(cloak init)"`) is optional — enables `claude account` and `claude -a` syntax
-- Requires Node.js >= 18
+- Requires Node.js >= 20
 
 ### 7.2 Performance
 - All operations must complete in under 1 second
