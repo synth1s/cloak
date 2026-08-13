@@ -492,9 +492,10 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
  9. tip.test.js       → tip.js            (first-run shell integration tip)
 10. setup.test.js     → setup.js          (automatic shell integration setup)
 11. init.test.js      → init.js           (shell code output)
+12. prompt.test.js    → inquirer contract  (interactive prompts across commands)
 ```
 
-### 5.4 Test matrix (82 tests across 11 suites)
+### 5.4 Test matrix (132 tests across 15 suites)
 
 #### `tests/validate.test.js` — Name validation
 
@@ -668,6 +669,24 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 | CB-03 | Bar fills to terminal width | `columns = 80` | Line length is 80 chars |
 | CB-04 | Shows only command when no profile active | No `CLAUDE_CONFIG_DIR` | Contains command, no profile |
 | CB-05 | Gracefully handles missing email | Profile without .claude.json | Shows profile without email |
+
+#### `tests/prompt.test.js` — Interactive prompts (inquirer contract)
+
+Every other suite bypasses prompts by passing `options.confirm`, so nothing exercised `inquirer` until an upgrade from 10.2.2 to 12.11.1 shipped with zero coverage. These tests replace `inquirer.prompt` with a recorder — the module itself is never stubbed — and assert the descriptors each command builds, plus the branches taken from the answer. P-01 guards the dependency contract directly.
+
+| ID | Scenario | Precondition | Expected |
+|----|----------|-------------|----------|
+| P-01 | inquirer registers every prompt type cloak uses | Installed inquirer | `input`, `confirm` and `list` present in the registry |
+| P-02 | create with no name asks for one | No name argument | `input` prompt named `accountName`, answer creates the profile |
+| P-03 | create trims whitespace around the answer | Answer `"  spaced  "` | Profile `spaced` created |
+| P-04 | create validate accepts a valid name | Captured descriptor | `validate("work")` returns `true` |
+| P-05 | create validate rejects an invalid name | Captured descriptor | `validate("../escape")` returns a non-empty string |
+| P-06 | create asks before overwriting | Profile exists, no `confirm` | `confirm` prompt with `default: false` |
+| P-07 | delete asks for confirmation | Profile exists, no `confirm` | `confirm` prompt with `default: false`; answering no keeps it |
+| P-08 | delete proceeds when answered yes | Profile exists | Directory removed |
+| P-09 | rename asks for confirmation | Profile exists, no `confirm` | `confirm` prompt with `default: true`; rename applied |
+| P-10 | rename aborts when answered no | Profile exists | Old name kept, new name absent |
+| P-11 | switch without shell integration offers setup choices | No `printEnv` | `list` prompt with choices `auto` and `manual` |
 
 ---
 
