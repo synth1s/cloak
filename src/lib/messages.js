@@ -168,4 +168,5 @@ export const prompts = {
   setupChoice: 'How would you like to proceed?',
   setupAuto: 'Set it up now (recommended)',
   setupManual: 'Show me the manual steps',
+  switchPick: 'Which cloak do you want to wear?',
 }

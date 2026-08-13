@@ -61,7 +61,7 @@ On first `cloak switch` without shell integration, user is prompted to set it up
 ## Available commands
 ```
 cloak create [name]                — save current session as a new cloak
-cloak switch <name>                — wear a different cloak (alias: use)
+cloak switch [name]                — wear a different cloak; omit name for a picker (alias: use)
 cloak list                         — see all cloaks (alias: ls)
 cloak whoami                       — which cloak are you wearing?
 cloak delete <name>                — discard a cloak (alias: rm)

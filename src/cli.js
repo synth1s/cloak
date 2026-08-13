@@ -58,9 +58,9 @@ program
   })
 
 program
-  .command('switch <name>')
+  .command('switch [name]')
   .alias('use')
-  .description('Wear a different cloak')
+  .description('Wear a different cloak (omit name to pick from a list)')
   .action((name) => {
     if (!_printEnv) renderContextBar('switch')
     return switchAccount(name, { printEnv: _printEnv })

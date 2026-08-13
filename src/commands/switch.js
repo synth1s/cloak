@@ -1,10 +1,46 @@
 import inquirer from 'inquirer'
-import { profileDir, profileExists, getActiveProfile } from '../lib/paths.js'
+import { profileDir, profileExists, getActiveProfile, listProfileNames } from '../lib/paths.js'
 import { validateAccountName } from '../lib/validate.js'
 import { getRcFilePath, isAlreadyInstalled, installToRcFile } from '../lib/setup.js'
 import * as msg from '../lib/messages.js'
 
 export async function switchAccount(name, options = {}) {
+  // No name given — show an interactive picker of available cloaks.
+  if (!name) {
+    const names = listProfileNames().sort()
+    if (names.length === 0) {
+      console.error(msg.noCloaksYet())
+      console.error(msg.suggestCreate())
+      process.exit(1)
+      return
+    }
+
+    let choice = options.pickChoice
+    if (choice === undefined) {
+      const active = getActiveProfile()
+      // Render the picker on stderr so stdout stays clean for eval (--print-env).
+      const prompt = inquirer.createPromptModule({ output: process.stderr })
+      try {
+        const answer = await prompt([{
+          type: 'list',
+          name: 'name',
+          message: msg.prompts.switchPick,
+          default: active || undefined,
+          choices: names.map(n => ({
+            name: n === active ? `${n} (current)` : n,
+            value: n,
+          })),
+        }])
+        choice = answer.name
+      } catch {
+        // Picker aborted (Ctrl-C / EOF) — leave stdout empty so eval is a no-op.
+        console.error(msg.cancelled())
+        return
+      }
+    }
+    name = choice
+  }
+
   const validation = validateAccountName(name)
   if (!validation.valid) {
     console.error(msg.validationError(validation.error))

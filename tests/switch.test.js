@@ -146,4 +146,32 @@ describe('switch', () => {
     const output = await captureStdoutAsync(() => switchAccount('work', { printEnv: true }))
     assert.ok(output.includes('CLAUDE_CONFIG_DIR="'), 'path is double-quoted')
   })
+
+  it('S-11: no name shows picker and switches to the chosen cloak', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    fs.mkdirSync(profileDir('home'), { recursive: true })
+    const output = await captureStdoutAsync(() =>
+      switchAccount(undefined, { printEnv: true, pickChoice: 'home' }))
+    assert.ok(output.includes('export CLAUDE_CONFIG_DIR='))
+    assert.ok(output.includes(profileDir('home')))
+  })
+
+  it('S-12: no name with no cloaks exits 1 and writes nothing to stdout', async () => {
+    let exitCode = null
+    const originalExit = process.exit
+    process.exit = (code) => { exitCode = code }
+    const stdout = await captureStdoutAsync(async () => {
+      try { await switchAccount(undefined, { printEnv: true }) } finally { process.exit = originalExit }
+    })
+    assert.equal(exitCode, 1)
+    assert.equal(stdout, '', 'no eval-able output when there are no cloaks')
+  })
+
+  it('S-13: picking the active cloak produces no stdout', async () => {
+    fs.mkdirSync(profileDir('work'), { recursive: true })
+    process.env.CLAUDE_CONFIG_DIR = profileDir('work')
+    const output = await captureStdoutAsync(() =>
+      switchAccount(undefined, { printEnv: true, pickChoice: 'work' }))
+    assert.equal(output, '', 'already wearing the picked cloak — nothing to eval')
+  })
 })
