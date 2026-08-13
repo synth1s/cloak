@@ -36,7 +36,8 @@ src/
 tests/
     validate.test.js, paths.test.js, create.test.js, whoami.test.js,
     list.test.js, switch.test.js, delete.test.js, rename.test.js,
-    setup.test.js, tip.test.js, context-bar.test.js, bind.test.js, init.test.js
+    setup.test.js, tip.test.js, context-bar.test.js, bind.test.js, init.test.js,
+    prompt.test.js
 docs/
     requirements.md    — use cases, business rules, references
     technical-spec.md  — architecture, contracts, test matrix
