@@ -65,6 +65,7 @@ claude -a home       # in another terminal, at the same time
 | `cloak rename <old> <new>` | Rename a cloak |
 | `cloak bind <name>` | Bind this directory to a cloak |
 | `cloak unbind` | Remove directory binding |
+| `cloak provider [name]` | Add a custom model provider as a cloak |
 
 With shell integration (`eval "$(cloak init)"`):
 
@@ -100,6 +101,34 @@ cloak bind home
 ```
 
 From now on, `claude` in those directories uses the bound account — no manual switch needed.
+
+## Other model providers
+
+A cloak doesn't have to be an Anthropic account. Any provider that speaks the
+Anthropic API — GLM (Zhipu), Alibaba DashScope (Qwen), Kimi, DeepSeek, or your
+own gateway — can be worn like any other cloak.
+
+```bash
+# Built-in presets (you'll be asked for your API key):
+cloak provider glm
+cloak provider dashscope
+
+# Any Anthropic-compatible endpoint:
+cloak provider mygateway --base-url https://my.proxy/api --token sk-...
+
+# Then wear it like anything else:
+cloak switch glm
+claude            # now talking to GLM
+```
+
+Flags (skip the prompts): `--provider <glm|dashscope|kimi|deepseek|custom>`,
+`--base-url <url>`, `--token <key>`, `--model <name>`.
+
+Under the hood, the provider's `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, and
+optional `ANTHROPIC_MODEL` are stored in the cloak's own `settings.json`. Claude
+Code applies them automatically when you wear that cloak — same isolation as
+account cloaks, no global config touched. Mix provider cloaks and Anthropic
+account cloaks freely, even across concurrent terminals.
 
 ## Context bar
 
