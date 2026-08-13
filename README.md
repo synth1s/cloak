@@ -181,7 +181,7 @@ IDE extensions may not respect `CLAUDE_CONFIG_DIR` ([known limitation](https://g
 
 ## Requirements
 
-- Node.js >= 18
+- Node.js >= 20
 - bash or zsh (for shell integration)
 
 ## Contributing

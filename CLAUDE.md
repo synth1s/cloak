@@ -6,7 +6,7 @@ Each account is an isolated directory used via the official `CLAUDE_CONFIG_DIR` 
 Supports concurrent sessions — different terminals can wear different cloaks simultaneously.
 
 ## Stack
-- Node.js >= 18 ESM (type: "module")
+- Node.js >= 20 ESM (type: "module")
 - commander — CLI command parsing
 - chalk — colored terminal output
 - inquirer — interactive prompts (confirmation, input)
