@@ -148,6 +148,44 @@ export function wearingCloak(name) {
   return `Wearing cloak "${name}"`
 }
 
+// --- Env vars ---
+
+export function envVarSet(key) {
+  return `${icon.success} Set ${chalk.bold(key)} for this cloak.`
+}
+
+export function envVarUnset(key) {
+  return `${icon.success} Removed ${chalk.bold(key)} from this cloak.`
+}
+
+export function envVarNotSet(key) {
+  return `${icon.warning} ${chalk.bold(key)} is not set for this cloak.`
+}
+
+export function envListHeader(name) {
+  return chalk.bold(`\nEnvironment variables for cloak "${name}"\n`)
+}
+
+export function envListItem(key, value) {
+  return `  ${chalk.cyan(key)}=${chalk.white(value)}`
+}
+
+export function envListEmpty() {
+  return chalk.dim('  No environment variables set for this cloak.')
+}
+
+export function noActiveCloakForEnv() {
+  return `${icon.error} No cloak active. Switch to a cloak first.`
+}
+
+export function envInvalidFormat(assignment) {
+  return `${icon.error} Expected KEY=VALUE, got: ${chalk.bold(assignment)}`
+}
+
+export function envEmptyKey() {
+  return `${icon.error} Key cannot be empty.`
+}
+
 // --- Print-env (stdout, no chalk — evaluated by shell) ---
 
 export function printEnvExport(dir) {

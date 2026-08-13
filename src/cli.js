@@ -16,6 +16,7 @@ import { renameAccount } from './commands/rename.js'
 import { bindAccount } from './commands/bind.js'
 import { unbindAccount } from './commands/unbind.js'
 import { initShell } from './commands/init.js'
+import { envSet, envUnset, envList } from './commands/env.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'))
@@ -115,6 +116,21 @@ program
     renderContextBar('unbind')
     return unbindAccount()
   })
+
+const envCmd = program
+  .command('env')
+  .description('Manage per-cloak environment variables')
+  .action(() => envList())
+
+envCmd
+  .command('set <assignment>')
+  .description('Set KEY=VALUE for current cloak')
+  .action((assignment) => envSet(assignment))
+
+envCmd
+  .command('unset <key>')
+  .description('Remove an env var from current cloak')
+  .action((key) => envUnset(key))
 
 program
   .command('context-bar', { hidden: true })
