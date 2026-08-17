@@ -495,7 +495,7 @@ Each module follows the **Red → Green → Refactor** cycle. The test is writte
 12. prompt.test.js    → inquirer contract  (interactive prompts across commands)
 ```
 
-### 5.4 Test matrix (132 tests across 15 suites)
+### 5.4 Test matrix (135 tests across 15 suites)
 
 #### `tests/validate.test.js` — Name validation
 
